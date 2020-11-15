@@ -1,5 +1,8 @@
 {
   "domain": "dingz",
   "name": "dingz",
-  "config_flow": true
+  "config_flow": true,
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": []
 }
