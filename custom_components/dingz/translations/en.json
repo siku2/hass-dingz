@@ -1,0 +1,17 @@
+{
+  "title": "dingz",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to dingz",
+        "data": {
+          "host": "Host"
+        }
+      }
+    },
+    "error": {
+      "connect_failed": "Failed to connect",
+      "invalid_type": "Invalid device type"
+    }
+  }
+}
