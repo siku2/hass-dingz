@@ -27,16 +27,13 @@ async def async_setup_entry(hass, entry, async_add_entities):
         entities.append(DimmerEntity(c, config, i))
 
     async_add_entities(entities)
+    return True
 
 
 class LED(DingzEntity, LightEntity):
     @property
     def name(self):
         return f"{super().name} LED"
-
-    @property
-    def entity_picture(self):
-        return f"{self._dingz_session.host}/favicon.ico"
 
     @property
     def brightness(self):

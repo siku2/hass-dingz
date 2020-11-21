@@ -23,6 +23,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         entities.append(Input(c))
 
     async_add_entities(entities)
+    return True
 
 
 class Brightness(DingzEntity):
