@@ -164,6 +164,7 @@ class Sensors(FromJSON):
     
     If there is any error the field is not present.
     """
+    temp_offset: Optional[float] = None
     light_off_timer: Optional[int] = None
     """If the PIR timer is enabled on any output then this field is present and show how much time left to turn off the output."""
     suspend_timer: Optional[int] = None
