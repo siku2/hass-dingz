@@ -12,7 +12,16 @@ logger = logging.getLogger(__name__)
 class FromJSON(abc.ABC):
     @classmethod
     def _from_json(cls, data):
-        return cls(**data)
+        kwargs = {}
+        for field in dataclasses.fields(cls):
+            key = field.name
+            try:
+                kwargs[key] = data.pop(key)
+            except KeyError:
+                continue
+        if data:
+            logger.warning(f"unhandled keys: {set(data.keys())!r}")
+        return cls(**kwargs)
 
     @classmethod
     def from_json(cls, data):
@@ -63,7 +72,8 @@ class Dimmer(FromJSON):
 
     @classmethod
     def _from_json(cls, data):
-        return cls(index=Index.from_json(data.pop("index")), **data)
+        data["index"] = Index.from_json(data["index"])
+        return super()._from_json(data)
 
 
 @dataclasses.dataclass()
@@ -83,12 +93,10 @@ class Blind(FromJSON):
 
     @classmethod
     def _from_json(cls, data):
-        return cls(
-            target=cls.Position.from_json(data.pop("target")),
-            current=cls.Position.from_json(data.pop("current")),
-            index=Index.from_json(data.pop("index")),
-            **data,
-        )
+        data["target"] = cls.Position.from_json(data["target"])
+        data["current"] = cls.Position.from_json(data["current"])
+        data["index"] = Index.from_json(data["index"])
+        return super()._from_json(data)
 
 
 @dataclasses.dataclass()
@@ -181,7 +189,7 @@ class Sensors(FromJSON):
                 logger.error("failed to handle power outputs")
                 raise
 
-        return cls(**data)
+        return super()._from_json(data)
 
 
 @dataclasses.dataclass()
@@ -250,16 +258,14 @@ class State(FromJSON):
 
     @classmethod
     def _from_json(cls, data):
-        return cls(
-            dimmers=Dimmer.list_from_json(data.pop("dimmers")),
-            blinds=Blind.list_from_json(data.pop("blinds")),
-            led=LED.from_json(data.pop("led")),
-            sensors=Sensors.from_json(data.pop("sensors")),
-            thermostat=Thermostat.from_json(data.pop("thermostat")),
-            wifi=WiFi.from_json(data.pop("wifi")),
-            config=Config.from_json(data.pop("config")),
-            **data,
-        )
+        data["dimmers"] = Dimmer.list_from_json(data["dimmers"])
+        data["blinds"] = Blind.list_from_json(data["blinds"])
+        data["led"] = LED.from_json(data["led"])
+        data["sensors"] = Sensors.from_json(data["sensors"])
+        data["thermostat"] = Thermostat.from_json(data["thermostat"])
+        data["wifi"] = WiFi.from_json(data["wifi"])
+        data["config"] = Config.from_json(data["config"])
+        return super()._from_json(data)
 
 
 DINGZ_INFO_TYPE = 108
@@ -535,11 +541,9 @@ class PIRConfig(FromJSON):
 
     @classmethod
     def _from_json(cls, data):
-        return cls(
-            thresholds=cls.Thresholds.from_json(data.pop("thresholds")),
-            dimmer=cls.Dimmer.list_from_json(data.pop("dimmer")),
-            **data,
-        )
+        data["thresholds"] = cls.Thresholds.from_json(data["thresholds"])
+        data["dimmer"] = cls.Dimmer.list_from_json(data["dimmer"]),
+        return super()._from_json(data)
 
 
 @dataclasses.dataclass()
