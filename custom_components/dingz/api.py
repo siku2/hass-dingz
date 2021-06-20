@@ -238,7 +238,7 @@ class WiFi(FromJSON):
     @classmethod
     def _from_json(cls, data):
         try:
-            data["gateway"] = data["gw"]
+            data["gateway"] = data.pop("gw")
         except KeyError:
             pass
         return super()._from_json(data)
@@ -300,6 +300,14 @@ class Info(FromJSON):
     """Wether or not the ip address is static"""
     connected: bool
     """Whether or not the device is connected to the internet"""
+
+    @classmethod
+    def _from_json(cls, data):
+        try:
+            data["gateway"] = data.pop("gw")
+        except KeyError:
+            pass
+        return super()._from_json(data)
 
 
 DIP_4_DIMMER = 3
