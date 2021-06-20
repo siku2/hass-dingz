@@ -16,7 +16,7 @@ class FromJSON(abc.ABC):
         for field in dataclasses.fields(cls):
             key = field.name
             try:
-                kwargs[key] = data.pop(key)
+                kwargs[key] = data[key]
             except KeyError:
                 continue
         if data:
@@ -235,6 +235,13 @@ class WiFi(FromJSON):
     connected: bool
     """If the device is connected to AP."""
 
+    @classmethod
+    def _from_json(cls, data):
+        try:
+            data["gateway"] = data["gw"]
+        except KeyError:
+            pass
+        return super()._from_json(data)
 
 @dataclasses.dataclass()
 class Config(FromJSON):
