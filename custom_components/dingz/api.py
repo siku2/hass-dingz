@@ -16,17 +16,17 @@ class FromJSON(abc.ABC):
         for field in dataclasses.fields(cls):
             key = field.name
             try:
-                kwargs[key] = data[key]
+                kwargs[key] = data.pop(key)
             except KeyError:
                 continue
         if data:
-            logger.warning(f"unhandled keys: {set(data.keys())!r}")
+            logger.warning(f"{cls.__qualname__!r} unhandled keys: {set(data.keys())!r}")
         return cls(**kwargs)
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, data: dict):
         try:
-            return cls._from_json(data)
+            return cls._from_json(data.copy())
         except Exception as e:
             if not getattr(e, "_handled", False):
                 logger.error(
@@ -263,6 +263,8 @@ class State(FromJSON):
     thermostat: Thermostat
     wifi: WiFi
     config: Config
+    # iso timestamps in the form of `yyyy-mm-dd HH:MM:SS`
+    time: Optional[str] = None
 
     @classmethod
     def _from_json(cls, data):
@@ -370,6 +372,14 @@ class Device(FromJSON):
 
 
 @dataclasses.dataclass()
+class TempComp(FromJSON):
+    fet_offset: float
+    gain_up: float
+    gain_down: float
+    gain_total: float
+
+
+@dataclasses.dataclass()
 class SystemConfig(FromJSON):
     allow_reset: bool
     """If the factory reset should be possible with the buttons."""
@@ -387,11 +397,6 @@ class SystemConfig(FromJSON):
     """Whether the Origin HTTP header should be checked.
     
     In case of a mismatch, the query rejected.
-    """
-    token: str
-    """Sets a Token for HTTP requests (max 256 chars).
-    
-    If the correct token is not provided, the query will be rejected.
     """
     upgrade_blink: bool
     """Should the LED flash pink while updating the firmware."""
@@ -426,6 +431,25 @@ class SystemConfig(FromJSON):
     """Read only. Temperature offset measured at the output transistors (-100..100)."""
     cpu_offset: int
     """Read only. Temperature offset measured on the puck CPU (-100..100)."""
+    token: Optional[str] = None
+    """Sets a Token for HTTP requests (max 256 chars).
+    
+    If the correct token is not provided, the query will be rejected.
+    """
+    mdns_search_period: Optional[int] = None
+    groups: Optional[List[bool]] = None
+    temp_comp: Optional[TempComp] = None
+
+    @classmethod
+    def _from_json(cls, data):
+        try:
+            raw_temp_comp = data.pop("temp_comp")
+        except KeyError:
+            pass
+        else:
+            data["temp_comp"] = TempComp.from_json(raw_temp_comp)
+
+        return super()._from_json(data)
 
 
 DIMMER_NOT_CONNECTED = "not_connected"
