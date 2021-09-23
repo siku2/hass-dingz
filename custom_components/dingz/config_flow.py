@@ -4,7 +4,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import aiohttp_client
 
-from .api import DingzSession, Info, DINGZ_INFO_TYPE
+from .api import DINGZ_INFO_TYPE, DingzSession
 from .const import DOMAIN
 
 logger = logging.getLogger(__name__)

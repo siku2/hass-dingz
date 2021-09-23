@@ -4,6 +4,8 @@
   "version": "0.1.4",
   "config_flow": true,
   "dependencies": [],
-  "codeowners": [],
+  "codeowners": [
+    "@siku2"
+  ],
   "requirements": []
 }

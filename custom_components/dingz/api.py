@@ -2,7 +2,7 @@ import abc
 import dataclasses
 import logging
 from datetime import datetime
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import aiohttp
 
@@ -242,6 +242,7 @@ class WiFi(FromJSON):
         except KeyError:
             pass
         return super()._from_json(data)
+
 
 @dataclasses.dataclass()
 class Config(FromJSON):
@@ -557,7 +558,7 @@ class PIRConfig(FromJSON):
     @classmethod
     def _from_json(cls, data):
         data["thresholds"] = cls.Thresholds.from_json(data["thresholds"])
-        data["dimmer"] = cls.Dimmer.list_from_json(data["dimmer"]),
+        data["dimmer"] = (cls.Dimmer.list_from_json(data["dimmer"]),)
         return super()._from_json(data)
 
 

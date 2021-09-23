@@ -3,7 +3,6 @@ import logging
 from homeassistant.components.light import (
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
-    SUPPORT_TRANSITION,
     LightEntity,
 )
 

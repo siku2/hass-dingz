@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 import logging
 from datetime import timedelta
 from typing import cast
@@ -77,14 +76,14 @@ async def async_setup_entry(hass, entry):
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, platform)
         )
-    
+
     return True
 
 
 async def async_unload_entry(hass, entry):
     for platform in PLATFORMS:
         await hass.config_entries.async_forward_entry_unload(entry, platform)
-    
+
     return True
 
 
