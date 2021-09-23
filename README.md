@@ -1,11 +1,11 @@
 # Home Assistant dingz
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 
 A custom component for [dingz](https://www.dingz.ch/) wall switches.
 
 After installing the component with [HACS](https://hacs.xyz) you'll find a new integration called "dingz".
-Automatic discovery currently isn't supported and you're strongly encouraged to use a static IP.
+Automatic discovery currently isn't supported and you're strongly encouraged to use a static IP or a hostname.
 
 ## Supported Features
 
