@@ -45,7 +45,7 @@ class FromJSON(abc.ABC):
 class Index(FromJSON):
     relative: int
     """The relative index.
-    
+
     Use this index to refer to dimmer for set the dimmer.
     """
     absolute: int
@@ -63,7 +63,7 @@ class Dimmer(FromJSON):
     """
     ramp: int
     """The ramp (how quickly change dim value) set on dimmer 0..255.
-    
+
     The ramp is always 0 for non dimmable outputs.
     """
     readonly: bool
@@ -78,23 +78,19 @@ class Dimmer(FromJSON):
 
 @dataclasses.dataclass()
 class Blind(FromJSON):
-    @dataclasses.dataclass()
-    class Position(FromJSON):
-        blind: int
-        """Position of blind 0..100. When you set the blind value this field contains this value."""
-        lamella: int
-        """position of lamella 0..100. When you set the lamella this filed contains this value."""
 
-    target: Position
-    current: Position
+    moving: str
+    """Moving state."""
+    position: int
+    """Position of blind 0..100. When you set the blind value this field contains this value."""
+    lamella: int
+    """position of lamella 0..100. When you set the lamella this filed contains this value."""
     readonly: bool
     """If the shade is disables. The value can have true if the outputs of blind are used by other functionality."""
     index: Index
 
     @classmethod
     def _from_json(cls, data):
-        data["target"] = cls.Position.from_json(data["target"])
-        data["current"] = cls.Position.from_json(data["current"])
         data["index"] = Index.from_json(data["index"])
         return super()._from_json(data)
 
@@ -105,12 +101,12 @@ class LED(FromJSON):
     """If the LED is on."""
     hsv: str
     """Color set on LED in HSV format.
-    
+
     String should be H;S;V, <0...359>;<0..100>;<0..100>.
     """
     rgb: str
     """Color set on LED in RGB format.
-    
+
     The string is 6 hex digits: RRGGBB.
     """
     mode: str
@@ -127,12 +123,12 @@ class LED(FromJSON):
 class Sensors(FromJSON):
     brightness: Optional[int]
     """The brightness read by light sensor including compensation of light depending on cover color.
-    
+
     If there is  error or no light sensor is present the field is set to `None`.
     """
     light_state: Optional[str]
     """The field contains the range in which the illuminance is located.
-    
+
     It can have values: day, twilight or night. The assignment to the interval depends on the settings in the WebUI/Motion Detector/Thresholds.
     In case of error or light sensor not present the field contain null value.
     """
@@ -140,36 +136,36 @@ class Sensors(FromJSON):
     """The temperature on front CPU."""
     puck_temperature: Optional[float]
     """The temperature on back CPU.
-    
+
     If there is any error then this field contain null value.
     """
     fet_temperature: Optional[float]
     """The internal puck/base FET temperature.
-    
+
     If there is any error then this field contain null value.
     """
     person_present: bool
     """The current status of motion."""
     input_state: Optional[bool]
     """If the output 1 is not configured as input then the field contain null value otherwise bool value represent input state (the voltage present on input).
-    
+
     The input state can be negated in input settings (WebUI/Input/invert).
     """
     power_outputs: Optional[List[float]]
     """This field contain array of objects.
-    
+
     Each object contain the value field which show the current power provided to device connected to output.
     This field can have the null value in case of any failure.
     """
 
     room_temperature: Optional[float] = None
     """The compensated temperature in room.
-    
+
     If there is any error the field is not present.
     """
     uncompensated_temperature: Optional[float] = None
     """The uncompensated temperature in room (measured by temperature sensor).
-    
+
     If there is any error the field is not present.
     """
     temp_offset: Optional[float] = None
@@ -395,7 +391,7 @@ class SystemConfig(FromJSON):
     """
     origin: bool
     """Whether the Origin HTTP header should be checked.
-    
+
     In case of a mismatch, the query rejected.
     """
     upgrade_blink: bool
@@ -408,19 +404,19 @@ class SystemConfig(FromJSON):
     """Name of the room in which the device is located (max 32 chars)"""
     temp_offset: int
     """Offset of the temperature measured by the device (-10..10)
-    
+
     Form of compensation.
     """
     time: str
     """This field is read-only and returns the date and time from the device.
-    
+
     ("YYYY-MM-DD hh:mm:ss")
     """
     system_status: str
     """Specifies the puck status.
-    
+
     Is there communication with it, are the outputs not overloaded, are the temperature not exceeded.
-    
+
     Values:
     - "OK"
     - "Puck not responding"
@@ -433,7 +429,7 @@ class SystemConfig(FromJSON):
     """Read only. Temperature offset measured on the puck CPU (-100..100)."""
     token: Optional[str] = None
     """Sets a Token for HTTP requests (max 256 chars).
-    
+
     If the correct token is not provided, the query will be rejected.
     """
     mdns_search_period: Optional[int] = None
@@ -460,7 +456,7 @@ DIMMER_NON_DIMMABLE = "non_dimmable"
 class DimmerConfig(FromJSON):
     output: str
     """Define light source type connected to output.
-    
+
     Values:
     - "halogen"
     - "incandescent"
@@ -474,7 +470,7 @@ class DimmerConfig(FromJSON):
     """Name of dimmer (max 32 chars)."""
     feedback: Optional[str]
     """Signalize by enable LED with specified color when the dimmer is turn on.
-    
+
     In case of multi dimmers set with feedback color enabled the color will be set to value get from first turned on dimmer.
     """
     feedback_intensity: int
@@ -487,6 +483,36 @@ class DimmerConfig(FromJSON):
     @property
     def available(self) -> bool:
         return bool(self.name) and self.output != DIMMER_NOT_CONNECTED
+
+
+BLINDS_NOT_INITIALIZED = "Not initialized"
+
+
+@dataclasses.dataclass()
+class BlindConfig(FromJSON):
+    type: str
+    """Define light source type connected to output.
+
+    Values:
+    - "lamella_90"
+    - "canvas"
+    """
+    name: str
+    """Name of blind (max 32 chars)."""
+
+    state: str
+    """The state of the blinds.
+
+    Values:
+    - "Not initialized"
+    - "Initialized"
+    - "Initialising"
+    - "Unknown"
+    """
+
+    @property
+    def available(self) -> bool:
+        return bool(self.name) and self.state != BLINDS_NOT_INITIALIZED
 
 
 @dataclasses.dataclass()
@@ -649,6 +675,10 @@ class DingzSession:
         raw = await self._get("/dimmer_config")
         return DimmerConfig.list_from_json(raw["dimmers"])
 
+    async def blind_config(self) -> List[BlindConfig]:
+        raw = await self._get("/blind_config")
+        return BlindConfig.list_from_json(raw["blinds"])
+
     async def pir_config(self) -> PIRConfig:
         raw = await self._get("/pir_config")
         return PIRConfig.from_json(raw)
@@ -677,3 +707,20 @@ class DingzSession:
             kwargs["value"] = round(value)
         action = "on" if state else "off"
         await self._post_plain(f"/dimmer/{index}/{action}", **kwargs)
+
+    async def set_blind_position(self, index: int, position: float) -> None:
+        kwargs = {}
+        kwargs["blind"] = round(position)
+        await self._post_plain(f"/shade/{index}", **kwargs)
+
+    async def blind_down(self, index: int) -> None:
+        kwargs = {}
+        await self._post_plain(f"/shade/{index}/down", **kwargs)
+
+    async def blind_up(self, index: int) -> None:
+        kwargs = {}
+        await self._post_plain(f"/shade/{index}/up", **kwargs)
+
+    async def blind_stop(self, index: int) -> None:
+        kwargs = {}
+        await self._post_plain(f"/shade/{index}/stop", **kwargs)
