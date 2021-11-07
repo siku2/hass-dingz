@@ -1,2 +1,2 @@
 DOMAIN = "dingz"
-PLATFORMS = ("light", "sensor")
+PLATFORMS = ("light", "sensor", "cover")
