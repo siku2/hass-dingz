@@ -15,11 +15,11 @@ Automatic discovery currently isn't supported and you're strongly encouraged to 
 - PIR (Motion) sensor (must be present and enabled)
 - Temperature sensors
 - Input
+- Blinds / Shades
 
 ## Unsupported Features
 
 - Thermostat
-- Blinds / Shades
 
 These are unsupported because I can't test them.
 If you would like to see support for any of these, don't hesitate to open an issue.
