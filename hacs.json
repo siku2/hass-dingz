@@ -1,6 +1,6 @@
 {
   "name": "dingz",
   "render_readme": true,
-  "domains": ["light", "sensor", "binary_sensor"],
+  "domains": ["light", "sensor", "binary_sensor", "cover"],
   "iot_class": "Local Polling"
 }

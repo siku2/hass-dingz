@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
 import aiohttp
+from voluptuous.validators import Boolean
 
 logger = logging.getLogger(__name__)
 
@@ -509,6 +510,13 @@ class BlindConfig(FromJSON):
     - "Initialising"
     - "Unknown"
     """
+    shade_up_time: float
+    invert_direction: Boolean
+    lamella_time: float
+    max_value: int
+    shade_down_time: float
+    min_value: int
+    auto_calibration: Boolean
 
     @property
     def available(self) -> bool:
