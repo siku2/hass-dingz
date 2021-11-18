@@ -65,9 +65,6 @@ async def setup_coordinator(hass, entry: ConfigEntry):
     coordinator = await DingzCoordinator.build(hass, session)
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    if not coordinator.device.dimmers_only:
-        logger.warning("shades / blinds aren't supported")
-
 
 async def async_setup_entry(hass, entry):
     await setup_coordinator(hass, entry)
