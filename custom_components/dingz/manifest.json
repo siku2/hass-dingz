@@ -1,7 +1,7 @@
 {
   "domain": "dingz",
   "name": "dingz",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "config_flow": true,
   "dependencies": [],
   "codeowners": [

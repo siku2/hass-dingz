@@ -53,7 +53,7 @@ class LED(DingzEntity, LightEntity):
         return SUPPORT_BRIGHTNESS | SUPPORT_COLOR
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         coordinator = self.coordinator
         state = self._dingz_state
         return {
@@ -125,7 +125,7 @@ class DimmerEntity(DingzEntity, LightEntity):
         return features
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         power_outputs = self._dingz_state.sensors.power_outputs
         if power_outputs:
             power_output = round(power_outputs[self._index], 1)

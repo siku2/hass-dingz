@@ -40,7 +40,7 @@ class Brightness(DingzEntity):
         return self._dingz_state.sensors.brightness
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         sensors = self._dingz_state.sensors
         return {"light_state": sensors.light_state}
 
@@ -67,7 +67,7 @@ class Motion(DingzEntity, BinarySensorEntity):
         return bool(self._dingz_state.sensors.person_present)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         sensors = self._dingz_state.sensors
         return {
             "light_off_timer": sensors.light_off_timer,
@@ -93,7 +93,7 @@ class Temperature(DingzEntity):
         return self._dingz_state.sensors.room_temperature
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         sensors = self._dingz_state.sensors
         return {
             "cpu": sensors.cpu_temperature,
