@@ -719,6 +719,8 @@ class DingzSession:
     async def set_blind_position(self, index: int, position: float) -> None:
         kwargs = {}
         kwargs["blind"] = round(position)
+        # As a first attempt, set the lamella to be equal to position. That's how lamellas work anyway.
+        kwargs["lamella"] = round(position)
         await self._post_plain(f"/shade/{index}", **kwargs)
 
     async def blind_down(self, index: int) -> None:
