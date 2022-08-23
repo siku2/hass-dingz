@@ -113,6 +113,7 @@ class DingzEntity(CoordinatorEntity):
             "manufacturer": "iolo AG",
             "model": coordinator.device.front_hw_model,
             "sw_version": coordinator.info.version,
+            "configuration_url": f"http://{coordinator.info.ip}",
         }
 
     @property
