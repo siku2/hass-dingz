@@ -15,7 +15,7 @@ Automatic discovery currently isn't supported and you're strongly encouraged to 
 - PIR (Motion) sensor (must be present and enabled)
 - Temperature sensors
 - Input
-- Blinds / Shades
+- Blinds / Shades (position and tilt)
 
 ## Unsupported Features
 

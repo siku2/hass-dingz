@@ -2,6 +2,7 @@ import logging
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
+    ATTR_TILT_POSITION,
     CoverEntity,
 )
 
@@ -60,6 +61,11 @@ class DingzCoverEntity(DingzEntity, CoverEntity):
         """Return the current position of cover where 0 means closed and 100 is fully open."""
         return self._dingz_blind.position
 
+    @property
+    def current_cover_tilt_position(self) -> int:
+        """Return the current position of cover of cover tilt where 0 means closed and 100 is fully open."""
+        return self._dingz_blind.lamella
+
     async def async_close_cover(self, **kwargs):
         """Close cover."""
         await self._dingz_session.blind_down(self._index)
@@ -74,6 +80,12 @@ class DingzCoverEntity(DingzEntity, CoverEntity):
         """Move the cover to a specific position."""
         position = kwargs.get(ATTR_POSITION)
         await self._dingz_session.set_blind_position(self._index, position=position)
+        await self.coordinator.async_request_refresh()
+
+    async def async_set_cover_tilt_position(self, **kwargs):
+        """Move the cover tilt to a specific position."""
+        tilt = kwargs.get(ATTR_TILT_POSITION)
+        await self._dingz_session.set_blind_tilt_position(self._index, tilt=tilt)
         await self.coordinator.async_request_refresh()
 
     async def async_stop_cover(self, **kwargs):

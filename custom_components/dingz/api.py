@@ -723,6 +723,14 @@ class DingzSession:
         kwargs["lamella"] = state.blinds[index].lamella
         await self._post_plain(f"/shade/{index}", **kwargs)
 
+    async def set_blind_tilt_position(self, index: int, tilt: float) -> None:
+        kwargs = {}
+        state = await self.state()
+        kwargs["blind"] = state.blinds[index].position
+        kwargs["lamella"] = round(tilt)
+        await self._post_plain(f"/shade/{index}", **kwargs)
+
+
     async def blind_down(self, index: int) -> None:
         kwargs = {}
         await self._post_plain(f"/shade/{index}/down", **kwargs)
