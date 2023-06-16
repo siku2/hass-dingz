@@ -384,12 +384,6 @@ class SystemConfig(FromJSON):
     """If it should be possible to enable WPS from the buttons."""
     allow_reboot: bool
     """If the restart should be possible from the buttons."""
-    broadcast_period: int
-    """How often to report a device to the network (5..65535).
-
-    Less broadcasting period causes the applications to find the device slower.
-    Unit is second.
-    """
     origin: bool
     """Whether the Origin HTTP header should be checked.
 
@@ -432,6 +426,13 @@ class SystemConfig(FromJSON):
     """Sets a Token for HTTP requests (max 256 chars).
 
     If the correct token is not provided, the query will be rejected.
+    """
+    # API v1 only attributes
+    broadcast_period: Optional[int] = 0
+    """API v1 only: How often to report a device to the network (5..65535).
+
+    Less broadcasting period causes the applications to find the device slower.
+    Unit is second.
     """
     mdns_search_period: Optional[int] = None
     groups: Optional[List[bool]] = None
