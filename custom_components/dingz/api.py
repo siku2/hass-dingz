@@ -145,8 +145,6 @@ class Sensors(FromJSON):
 
     If there is any error then this field contain null value.
     """
-    person_present: bool
-    """The current status of motion."""
     input_state: Optional[bool]
     """If the output 1 is not configured as input then the field contain null value otherwise bool value represent input state (the voltage present on input).
 
@@ -158,6 +156,9 @@ class Sensors(FromJSON):
     Each object contain the value field which show the current power provided to device connected to output.
     This field can have the null value in case of any failure.
     """
+    # API v1 only attributes
+    person_present: Optional[bool] = None
+    """API v1 only: The current status of motion."""
 
     room_temperature: Optional[float] = None
     """The compensated temperature in room.
@@ -193,10 +194,6 @@ class Sensors(FromJSON):
 class Thermostat(FromJSON):
     active: bool
     """If the thermostat functionality is enabled."""
-    out: int
-    """The output index assigned to thermostat."""
-    on: bool
-    """If the output controlled by thermostat is turn on."""
     enabled: bool
     """It the thermostat is enabled e.g. control output depending of temperature."""
     target_temp: float
@@ -209,6 +206,11 @@ class Thermostat(FromJSON):
     """Minimum target temperature."""
     max_target_temp: int
     """Maximum target temperature."""
+    # API v1 only attributes
+    out: Optional[int] = None
+    """API v1 only: The output index assigned to thermostat."""
+    on: Optional[bool] = None
+    """API v1 only: If the output controlled by thermostat is turn on."""
 
 
 @dataclasses.dataclass()
