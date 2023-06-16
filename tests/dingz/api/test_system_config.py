@@ -2,8 +2,9 @@ import json
 
 from dingz.api import SystemConfig
 
-SAMPLE_RESPONSE = json.loads(
-    """
+SAMPLE_RESPONSES = [
+    json.loads(
+        """
 {
   "allow_reset": true,
   "allow_wps": true,
@@ -46,9 +47,64 @@ SAMPLE_RESPONSE = json.loads(
   "system_status": "OK"
 }
 """
-)
+    ),
+    json.loads(
+        # API v2 has at least :
+        # - broadcast_period less
+        """
+{
+  "protected_status": false,
+  "allow_reset": true,
+  "allow_wps": true,
+  "allow_reboot": true,
+  "allow_remote_reboot": false,
+  "origin": true,
+  "upgrade_blink": true,
+  "reboot_blink": false,
+  "dingz_name": "dingz",
+  "room_name": "Cuisine",
+  "id": "f008d1c3a4f0",
+  "temp_offset": 6,
+  "fet_offset": 2.5,
+  "cpu_offset": 26.4,
+  "temp_comp": {
+    "fet_offset": 2.64,
+    "gain_up": 0.012,
+    "gain_down": 0.006,
+    "gain_total": 0.25
+  },
+  "sun_offset": 0,
+  "tzid": 0,
+  "lat": 10.0000,
+  "long": 0.1234,
+  "dyn_light": {
+    "enable": true,
+    "phases": 3,
+    "source": "sun",
+    "sun_offset": {
+      "day": 30,
+      "twilight": 30,
+      "night": 30
+    }
+  },
+  "wifi_ps": true,
+  "time": "2023-06-16 17:15:10",
+  "sunrise": {
+    "hour": 5,
+    "minute": 36
+  },
+  "sunset": {
+    "hour": 21,
+    "minute": 27
+  },
+  "system_status": "OK"
+}
+"""
+    ),
+]
 
 
 def test_parse():
-    data = SystemConfig.from_json(SAMPLE_RESPONSE)
-    assert data
+    for response in SAMPLE_RESPONSES:
+        data = SystemConfig.from_json(response)
+        assert data
