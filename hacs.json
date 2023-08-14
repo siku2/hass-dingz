@@ -1,6 +1,8 @@
 {
-  "name": "dingz",
-  "render_readme": true,
-  "domains": ["light", "sensor", "binary_sensor", "cover"],
-  "iot_class": "Local Polling"
+    "name": "Dingz",
+    "filename": "dingz.zip",
+    "hide_default_branch": true,
+    "homeassistant": "2023.8.2",
+    "render_readme": true,
+    "zip_release": true
 }

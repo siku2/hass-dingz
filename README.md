@@ -1,29 +1,27 @@
-# Home Assistant dingz
+# Dingz Home Assistant Integration
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![GitHub Release](https://img.shields.io/github/release/siku2/hass-dingz.svg?style=for-the-badge)](https://github.com/siku2/hass-dingz/releases)
+[![GitHub Activity](https://img.shields.io/github/commit-activity/y/siku2/hass-dingz.svg?style=for-the-badge)](https://github.com/siku2/hass-dingz/commits/main)
+[![License](https://img.shields.io/github/license/siku2/hass-dingz.svg?style=for-the-badge)](LICENSE)
 
-A custom component for [dingz](https://www.dingz.ch/) wall switches.
+[![hacs](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
 
-After installing the component with [HACS](https://hacs.xyz) you'll find a new integration called "dingz".
-Automatic discovery currently isn't supported and you're strongly encouraged to use a static IP or a hostname.
+_Integration to integrate with [Dingz](https://www.dingz.ch) devices._
 
-## Supported Features
+**This integration will set up the following platforms.**
 
-- Panel LED
-- Dimmers (for dimmers to be detected they must have a name)
-- Brightness sensor
-- PIR (Motion) sensor (must be present and enabled)
-- Temperature sensors
-- Input
-- Blinds / Shades (position and tilt)
+Platform | Description
+-- | --
+`sensor` | Eco management (water and energy usage) as well as the current program.
+`update` | Allows you to update the firmware.
 
-## Unsupported Features
+## Installation
 
-- Thermostat
+1. Add this repository as a custom repository to HACS: <https://hacs.xyz/docs/faq/custom_repositories>
+2. Use HACS to install the integration.
+3. Restart Home Assistant.
+4. Set up the integration using the UI: [![Add Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=dingz)
 
-These are unsupported because I can't test them.
-If you would like to see support for any of these, don't hesitate to open an issue.
+## Contributions are welcome!
 
-### Planned Features
-
-- Use a generic action to send events to Home Assistant. This will allow the reduction of the polling interval as well.
+If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)

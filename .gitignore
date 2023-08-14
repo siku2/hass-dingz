@@ -1,4 +1,15 @@
-/.venv/
-/venv/
+# artifacts
+__pycache__
+.pytest*
+*.egg-info
+*/build/*
+*/dist/*
 
-__pycache__/
+# misc
+.coverage
+.vscode
+coverage.xml
+
+# Home Assistant configuration
+config/*
+!config/configuration.yaml
