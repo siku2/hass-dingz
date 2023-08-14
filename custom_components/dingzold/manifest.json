@@ -1,0 +1,11 @@
+{
+  "domain": "dingz",
+  "name": "dingz",
+  "version": "0.2.0",
+  "config_flow": true,
+  "dependencies": [],
+  "codeowners": [
+    "@siku2"
+  ],
+  "requirements": []
+}

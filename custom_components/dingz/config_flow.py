@@ -1,40 +1,69 @@
 import logging
+from typing import Any
 
 import voluptuous as vol
+import yarl
 from homeassistant import config_entries
-from homeassistant.helpers import aiohttp_client
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import DINGZ_INFO_TYPE, DingzSession
+from . import api
 from .const import DOMAIN
+from .helpers import get_device_name
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
-FORM_SCHEMA = vol.Schema({vol.Required("host"): str})
+STEP_USER_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required("host"): str,
+    }
+)
+
+
+async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+    base_url = yarl.URL(data["host"])
+    if not base_url.is_absolute():
+        base_url = yarl.URL(f"http://{base_url}")
+
+    client = api.VZugApi(async_get_clientsession(hass), base_url)
+    try:
+        device = await client.get_device_status()
+    except Exception:
+        _LOGGER.exception("failed to get device status")
+        raise CannotConnect
+
+    try:
+        model_name = await client.get_model_description()
+    except Exception:
+        model_name = None
+
+    return {"title": get_device_name(device, model_name)}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    async def async_step_user(self, info):
-        errors = {}
-        if info is not None:
-            host: str = info["host"].rstrip("/")
-            if not host.startswith(("http://", "https://")):
-                host = f"http://{host}"
+    VERSION = 1
 
-            session = aiohttp_client.async_get_clientsession(self.hass)
-            session = DingzSession(session, host)
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
             try:
-                info = await session.info()
-            except Exception:
-                logger.exception(f"failed to connect to {host!r}")
-                errors["host"] = "connect_failed"
+                info = await validate_input(self.hass, user_input)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
             else:
-                if info.type == DINGZ_INFO_TYPE:
-                    return self.async_create_entry(
-                        title=info.mac[-6:], data={"host": host}
-                    )
-                else:
-                    errors["host"] = "invalid_type"
+                return self.async_create_entry(title=info["title"], data=user_input)
 
         return self.async_show_form(
-            step_id="user", data_schema=FORM_SCHEMA, errors=errors
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
+
+
+class CannotConnect(HomeAssistantError):
+    ...
