@@ -22,7 +22,7 @@
   "zeroconf": [
     {
       "type": "_http._tcp.local.",
-      "name": "DINGZ*"
+      "name": "dingz*"
     },
     {
       "type": "_http._tcp.local.",
