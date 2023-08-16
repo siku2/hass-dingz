@@ -5,4 +5,5 @@ default_config:
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    aiohttp: debug
+    custom_components.dingz: debug

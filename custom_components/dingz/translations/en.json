@@ -15,5 +15,96 @@
             }
         }
     },
-    "entity": {}
+    "entity": {
+        "binary_sensor": {
+            "input": {
+                "name": "{name} Input",
+                "name_fallback": "Input {position}"
+            },
+            "motion_0": {
+                "name": "PIR Motion"
+            },
+            "motion_1": {
+                "name": "Internal PIR"
+            }
+        },
+        "button": {
+            "save_default_config": {
+                "name": "Save Default Config"
+            },
+            "reboot": {
+                "name": "Reboot"
+            },
+            "reset_pir_time_0": {
+                "name": "Reset PIR Time"
+            },
+            "reset_pir_time_1": {
+                "name": "Reset Internal PIR Time"
+            }
+        },
+        "number": {
+            "temperature_offset": {
+                "name": "Temperature Offset"
+            }
+        },
+        "sensor": {
+            "brightness": {
+                "name": "Brightness"
+            },
+            "light_state": {
+                "name": "Light State",
+                "state": {
+                    "day": "Day",
+                    "twilight": "Twilight",
+                    "night": "Night"
+                }
+            },
+            "room_temperature": {
+                "name": "Room Temperature"
+            },
+            "uncompensated_temperature": {
+                "name": "Uncompensated Temperature"
+            },
+            "cpu_temperature": {
+                "name": "CPU Temperature"
+            },
+            "puck_temperature": {
+                "name": "Puck Temperature"
+            },
+            "fet_temperature": {
+                "name": "FET Temperature"
+            },
+            "dyn_light": {
+                "name": "Dynamic Light",
+                "state": {
+                    "day": "Day",
+                    "twilight": "Twilight",
+                    "night": "Night"
+                }
+            },
+            "output_power": {
+                "name": "{name} Power",
+                "name_fallback": "Output {position} Power"
+            },
+            "state_time": {
+                "name": "State Time"
+            },
+            "config_timestamp": {
+                "name": "Config Timestamp"
+            }
+        },
+        "switch": {
+            "mqtt_enable": {
+                "name": "MQTT Enable"
+            }
+        },
+        "text": {
+            "mqtt_uri": {
+                "name": "MQTT Uri"
+            },
+            "mqtt_server_crt": {
+                "name": "MQTT Server Certificate"
+            }
+        }
+    }
 }
