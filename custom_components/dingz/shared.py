@@ -102,14 +102,14 @@ class Shared:
     def add_listener(self, callback: "_NotificationCallbackT") -> Callable[[], None]:
         return self._notifier.add_listener(callback)
 
-    def _handle_mqtt_pir(self, msg: mqtt.ReceiveMessage) -> None:
+    async def _handle_mqtt_pir(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
         self._notifier.dispatch(
             PirNotification(index=index, event_type=cast(Any, msg.payload))
         )
 
-    def _handle_mqtt_button(self, msg: mqtt.ReceiveMessage) -> None:
+    async def _handle_mqtt_button(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
         self._notifier.dispatch(

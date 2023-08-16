@@ -23,6 +23,9 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
+# we use a different error than 'already_configured' because mqtt stops discovering new devices if we return it once
+_ERROR_DEVICE_ALREADY_CONFIGURED = "device_already_configured"
+
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     base_url = URL(data["host"])
@@ -47,29 +50,48 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._info: dict[str, Any] | None = None
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
-                info = await validate_input(self.hass, user_input)
+                self._info = await validate_input(self.hass, user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
-                if dingz_id := info["dingz_id"]:
+                if dingz_id := self._info["dingz_id"]:
                     await self.async_set_unique_id(dingz_id)
-                    self._abort_if_unique_id_configured()
-                return self.async_create_entry(title=info["title"], data=info["data"])
+                    self._abort_if_unique_id_configured(
+                        error=_ERROR_DEVICE_ALREADY_CONFIGURED
+                    )
+                return await self.async_step_confirm({})
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
+    async def async_step_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        if user_input is not None:
+            assert self._info
+            return self.async_create_entry(
+                title=self._info["title"], data=self._info["data"]
+            )
+
+        return self.async_show_form(step_id="confirm")
+
     async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
+        _LOGGER.debug("discovered potential device using mqtt: %s", discovery_info)
         try:
             payload = json.loads(discovery_info.payload)
         except json.JSONDecodeError:
@@ -85,23 +107,28 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except IndexError:
             return self.async_abort(reason="false_positive")
 
+        _LOGGER.debug("mqtt discovery: id=%s, ip=%s", dingz_id, ip)
         await self.async_set_unique_id(dingz_id)
-        self._abort_if_unique_id_configured()
+        self._abort_if_unique_id_configured(error=_ERROR_DEVICE_ALREADY_CONFIGURED)
 
-        return await super().async_step_user({"host": ip})
+        self._info = await validate_input(self.hass, {"host": ip})
+        return await self.async_step_confirm()
 
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
     ) -> FlowResult:
+        _LOGGER.debug("discovered potential device using zeroconf: %s", discovery_info)
         try:
             dingz_id = str(discovery_info.properties["id"])
         except KeyError:
             return self.async_abort(reason="false_positive")
 
+        _LOGGER.debug("zeroconf discovery: id=%s, ip=%s", dingz_id, discovery_info.host)
         await self.async_set_unique_id(dingz_id)
-        self._abort_if_unique_id_configured()
+        self._abort_if_unique_id_configured(error=_ERROR_DEVICE_ALREADY_CONFIGURED)
 
-        return await super().async_step_user({"host": discovery_info.host})
+        self._info = await validate_input(self.hass, {"host": discovery_info.host})
+        return await self.async_step_confirm()
 
 
 class CannotConnect(HomeAssistantError):
