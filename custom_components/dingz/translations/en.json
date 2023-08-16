@@ -42,6 +42,43 @@
                 "name": "Reset Internal PIR Time"
             }
         },
+        "event": {
+            "button": {
+                "name": "Button {name}",
+                "name_fallback": "Button {position}",
+                "state": {
+                    "p": "Pressed",
+                    "r": "Released",
+                    "h": "Hold",
+                    "m1": "Single-click",
+                    "m2": "Double-click",
+                    "m3": "Triple-click",
+                    "m4": "Quadruple-click",
+                    "m5": "Quintuple-click"
+                }
+            },
+            "pir_0": {
+                "name": "PIR",
+                "state": {
+                    "s": "Movement",
+                    "ss": "Present",
+                    "n": "Nobody"
+                }
+            },
+            "pir_1": {
+                "name": "Internal PIR",
+                "state": {
+                    "s": "Movement",
+                    "ss": "Present",
+                    "n": "Nobody"
+                }
+            }
+        },
+        "light": {
+            "front": {
+                "name": "Front"
+            }
+        },
         "number": {
             "temperature_offset": {
                 "name": "Temperature Offset"

@@ -2,10 +2,10 @@ import asyncio
 import dataclasses
 import logging
 import time
-from typing import Any, Awaitable, Callable, Literal, TypedDict, cast
+from collections.abc import Awaitable, Callable
+from typing import Any, Literal, TypedDict, cast
 
 import aiohttp
-from typing_extensions import Literal
 from yarl import URL
 
 _LOGGER = logging.getLogger(__name__)
@@ -347,6 +347,26 @@ class ThermostatConfig(TypedDict, total=False):
     outputs: list[Any]
 
 
+class ButtonConfig(TypedDict, total=False):
+    active: bool
+    name: str
+    icon: int
+    mode: dict[str, Any]
+    local_type: InputConfigType
+    type: InputConfigType
+    actions: dict[str, Any]
+    outputs: dict[str, Any]
+    motors: dict[str, Any]
+    feedback: dict[str, Any]
+    carousel: bool
+    button: dict[str, Any]
+
+
+class ButtonsConfig(TypedDict, total=False):
+    dingz_orientation: str
+    buttons: list[ButtonConfig]
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
 class FullDeviceConfig:
     device: Device
@@ -354,6 +374,7 @@ class FullDeviceConfig:
     services: ServicesConfig
     inputs: list[InputConfig]
     outputs: list[OutputConfig]
+    buttons: ButtonsConfig
 
 
 class _ReqThrottleLock(asyncio.Lock):
@@ -455,11 +476,15 @@ class Client:
     async def get_services_config(self) -> ServicesConfig:
         return await self._get("services_config")
 
+    async def get_buttons_config(self) -> ButtonsConfig:
+        return await self._get("button_config")
+
     async def get_full_device_config(self) -> FullDeviceConfig:
         devices = await self.get_device()
         device = next(iter(devices.values()), Device())
         system = await self.get_system_config()
         services = await self.get_services_config()
+        buttons = await self.get_buttons_config()
 
         input_config = await self.get_input_config()
         inputs = input_config.get("inputs", [])
@@ -473,6 +498,7 @@ class Client:
             services=services,
             inputs=inputs,
             outputs=outputs,
+            buttons=buttons,
         )
 
     async def update_mqtt_service_config(self, config: ServicesConfigMqtt) -> None:

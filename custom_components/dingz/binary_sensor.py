@@ -105,6 +105,7 @@ class Motion(CoordinatorEntity[StateCoordinator], BinarySensorEntity):
         self._attr_device_info = self.coordinator.shared.device_info
         self._attr_device_class = BinarySensorDeviceClass.MOTION
         self._attr_translation_key = f"motion_{index}"
+        # TODO: update from mqtt as well
 
     @property
     def dingz_pir(self) -> api.SensorPir:

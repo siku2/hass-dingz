@@ -10,6 +10,7 @@ PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.CLIMATE,
+    Platform.EVENT,
     Platform.LIGHT,
     Platform.NUMBER,
     Platform.SENSOR,
@@ -32,6 +33,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
+        shared: Shared | None = hass.data[DOMAIN].pop(entry.entry_id)
+        if shared:
+            await shared.unload()
 
     return unload_ok

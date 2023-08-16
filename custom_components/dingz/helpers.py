@@ -3,6 +3,8 @@ from typing import Any, cast
 
 from homeassistant.helpers.entity import Entity
 
+from .shared import InternalNotification, Shared
+
 
 def compile_json_path(raw: str) -> list[str | int]:
     path = cast(list[str | int], raw.split("."))
@@ -46,3 +48,17 @@ class UserAssignedNameMixin(Entity, abc.ABC):
         if tr_fmt is None:
             return None
         return tr_fmt.format(name=name, position=self.comp_index + 1)
+
+
+class InternalNotificationMixin(Entity, abc.ABC):
+    def __init__(self, shared: Shared) -> None:
+        super().__init__()
+        self.shared = shared
+
+    @abc.abstractmethod
+    def handle_notification(self, notification: InternalNotification) -> None:
+        ...
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.async_on_remove(self.shared.add_listener(self.handle_notification))

@@ -36,7 +36,7 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
         self._attr_has_entity_name = True
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-front_led"
         self._attr_device_info = coordinator.shared.device_info
-        self._attr_name = None
+        self._attr_translation_key = "front"
 
         self._attr_supported_color_modes = {
             ColorMode.HS,
