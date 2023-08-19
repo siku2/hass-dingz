@@ -43,11 +43,12 @@ async def async_setup_entry(
     ]
 
     try:
-        nr_pirs = len(shared.state.data["sensors"]["pirs"])
+        pirs = shared.state.data["sensors"]["pirs"]
     except LookupError:
-        nr_pirs = 0
-    for index in range(nr_pirs):
-        entities.append(ResetPirTime(shared, index=index))
+        pirs = []
+    for index, dingz_pir in enumerate(pirs):
+        if dingz_pir and dingz_pir.get("enabled", False):
+            entities.append(ResetPirTime(shared, index=index))
 
     async_add_entities(entities)
 
@@ -105,10 +106,6 @@ class ResetPirTime(ButtonEntity):
         if raw is None:
             return api.SensorPir()
         return raw
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        return self.dingz_pir.get("enabled", False)
 
     async def async_press(self) -> None:
         await self.shared.client.reset_pir_time(self.__index)

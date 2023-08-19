@@ -21,15 +21,17 @@ async def async_setup_entry(
     shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
 
     entities: list[BinarySensorEntity] = []
-    for index in range(len(shared.config.data.inputs)):
-        entities.append(Input(shared.state, index=index))
+    for index, dingz_input in enumerate(shared.config.data.inputs):
+        if dingz_input.get("active", False):
+            entities.append(Input(shared.state, index=index))
 
     try:
-        nr_pirs = len(shared.state.data["sensors"]["pirs"])
+        pirs = shared.state.data["sensors"]["pirs"]
     except LookupError:
-        nr_pirs = 0
-    for index in range(nr_pirs):
-        entities.append(Motion(shared.state, index=index))
+        pirs = []
+    for index, dingz_pir in enumerate(pirs):
+        if dingz_pir and dingz_pir.get("enabled", False):
+            entities.append(Motion(shared.state, index=index))
 
     async_add_entities(entities)
 
@@ -53,10 +55,6 @@ class Input(
             return self.coordinator.shared.config.data.inputs[self.__index]
         except LookupError:
             return api.InputConfig()
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        return self.dingz_input.get("active", False)
 
     @property
     def comp_index(self) -> int:
@@ -116,10 +114,6 @@ class Motion(CoordinatorEntity[StateCoordinator], BinarySensorEntity):
         if raw is None:
             return api.SensorPir()
         return raw
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        return self.dingz_pir.get("enabled", False)
 
     @property
     def is_on(self) -> bool | None:

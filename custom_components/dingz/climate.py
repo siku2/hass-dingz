@@ -28,7 +28,17 @@ async def async_setup_entry(
 ) -> None:
     shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
 
-    entities: list[ClimateEntity] = [Climate(shared.state)]
+    entities: list[ClimateEntity] = []
+
+    try:
+        # for some reason it's the 'active' field here instead of 'enabled'
+        thermostat_enabled = shared.state.data["thermostat"]["active"]
+    except LookupError:
+        thermostat_enabled = False
+
+    if thermostat_enabled:
+        entities.append(Climate(shared.state))
+
     async_add_entities(entities)
 
 
@@ -44,14 +54,6 @@ class Climate(CoordinatorEntity[StateCoordinator], ClimateEntity):
         self._attr_temperature_unit = "°C"
         self._attr_target_temperature_step = 1.0  # from web frontend
         self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        try:
-            # for some reason it's the 'active' field here instead of 'enabled'
-            return self.coordinator.data["thermostat"]["active"]
-        except LookupError:
-            return False
 
     @property
     def current_temperature(self) -> float | None:

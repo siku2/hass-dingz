@@ -17,19 +17,22 @@ async def async_setup_entry(
     shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
 
     entities: list[EventEntity] = []
-    try:
-        nr_pirs = len(shared.state.data["sensors"]["pirs"])
-    except LookupError:
-        nr_pirs = 0
-    for index in range(nr_pirs):
-        entities.append(Pir(shared, index=index))
 
     try:
-        nr_buttons = len(shared.config.data.buttons["buttons"])
+        pirs = shared.state.data["sensors"]["pirs"]
     except LookupError:
-        nr_buttons = 0
-    for index in range(nr_buttons):
-        entities.append(Button(shared, index=index))
+        pirs = []
+    for index, dingz_pir in enumerate(pirs):
+        if dingz_pir and dingz_pir.get("enabled", False):
+            entities.append(Pir(shared, index=index))
+
+    try:
+        buttons = shared.config.data.buttons["buttons"]
+    except LookupError:
+        buttons = []
+    for index, dingz_button in enumerate(buttons):
+        if dingz_button.get("active", False):
+            entities.append(Button(shared, index=index))
 
     async_add_entities(entities)
 
@@ -82,10 +85,6 @@ class Button(EventEntity, UserAssignedNameMixin, InternalNotificationMixin):
             return self.shared.config.data.buttons["buttons"][self.__index]
         except LookupError:
             return api.ButtonConfig()
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        return self.dingz_button.get("active", False)
 
     @property
     def comp_index(self) -> int:

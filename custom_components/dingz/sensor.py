@@ -72,24 +72,23 @@ async def async_setup_entry(
         ),
     ]
 
-    def dyn_light_enabled() -> bool:
-        try:
-            return shared.config.data.system["dyn_light"]["enable"]
-        except LookupError:
-            return False
+    try:
+        dyn_light_enabled = shared.config.data.system["dyn_light"]["enable"]
+    except LookupError:
+        dyn_light_enabled = False
 
-    entities.append(
-        JsonPathSensor(
-            shared.state,
-            SensorEntityDescription(
-                key="dyn_light.mode",
-                device_class=SensorDeviceClass.ENUM,
-                options=["day", "night", "twilight"],
-                translation_key="dyn_light",
-            ),
-            enabled_fn=dyn_light_enabled,
+    if dyn_light_enabled:
+        entities.append(
+            JsonPathSensor(
+                shared.state,
+                SensorEntityDescription(
+                    key="dyn_light.mode",
+                    device_class=SensorDeviceClass.ENUM,
+                    options=["day", "night", "twilight"],
+                    translation_key="dyn_light",
+                ),
+            )
         )
-    )
 
     for name, is_diag in (
         ("room_temperature", False),
@@ -112,8 +111,9 @@ async def async_setup_entry(
             )
         )
 
-    for index in range(len(shared.config.data.outputs)):
-        entities.append(OutputPower(shared.state, index=index))
+    for index, dingz_output in enumerate(shared.config.data.outputs):
+        if dingz_output.get("active", False):
+            entities.append(OutputPower(shared.state, index=index))
 
     async_add_entities(entities)
 
@@ -153,10 +153,6 @@ class OutputPower(
             return api.OutputConfig()
 
     @property
-    def entity_registry_enabled_default(self) -> bool:
-        return self.dingz_output.get("active", False)
-
-    @property
     def comp_index(self) -> int:
         return self.__index
 
@@ -182,7 +178,6 @@ class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
         *,
         transform_fn: Callable[[Any], StateType | date | datetime | Decimal]
         | None = None,
-        enabled_fn: Callable[[], bool] | None = None,
     ) -> None:
         super().__init__(coordinator)
 
@@ -193,13 +188,6 @@ class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
 
         self.__path = compile_json_path(desc.key)
         self.__transform_fn = transform_fn
-        self.__enabled_fn = enabled_fn
-
-    @property
-    def entity_registry_enabled_default(self) -> bool:
-        if not self.__enabled_fn:
-            return super().entity_registry_enabled_default
-        return self.__enabled_fn()
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
