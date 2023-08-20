@@ -8,12 +8,6 @@
 
 _Integration to integrate with [Dingz](https://www.dingz.ch) devices._
 
-**This integration will set up the following platforms.**
-
-Platform | Description
--- | --
-`sensor` | Eco management (water and energy usage) as well as the current program.
-`update` | Allows you to update the firmware.
 
 ## Installation
 
