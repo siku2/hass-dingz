@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from typing import Any
 
@@ -16,6 +15,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
+from .helpers import DelayedCoordinatorRefreshMixin
 from .shared import Shared, StateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,7 +42,9 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class Climate(CoordinatorEntity[StateCoordinator], ClimateEntity):
+class Climate(
+    CoordinatorEntity[StateCoordinator], ClimateEntity, DelayedCoordinatorRefreshMixin
+):
     def __init__(self, coordinator: StateCoordinator) -> None:
         super().__init__(coordinator)
 
@@ -124,11 +126,6 @@ class Climate(CoordinatorEntity[StateCoordinator], ClimateEntity):
 
         await self.coordinator.shared.client.update_thermostat_config(config)
         await self.delayed_request_refresh()
-
-    async def delayed_request_refresh(self) -> None:
-        # HACK: dingz takes some time to realize and update its internal state
-        await asyncio.sleep(1.5)
-        await self.coordinator.async_request_refresh()
 
 
 def dingz_to_hvac_mode(value: api.ThermostatModeEnum) -> HVACMode | None:

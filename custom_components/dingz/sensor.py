@@ -57,6 +57,7 @@ async def async_setup_entry(
                 device_class=SensorDeviceClass.TIMESTAMP,
                 translation_key="state_time",
                 entity_category=EntityCategory.DIAGNOSTIC,
+                entity_registry_enabled_default=False,
             ),
             transform_fn=_dt_with_hass_tz,
         ),
@@ -134,7 +135,6 @@ class OutputPower(
         self.__index = index
 
         key = f"output-power-{index}"
-        self._attr_has_entity_name = True
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-{key}"
         self._attr_device_info = self.coordinator.shared.device_info
         self.entity_description = SensorEntityDescription(

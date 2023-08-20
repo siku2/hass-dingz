@@ -1,7 +1,9 @@
 import abc
+import asyncio
 from typing import Any, cast
 
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .shared import InternalNotification, Shared
 
@@ -24,6 +26,8 @@ def json_path_lookup(value: Any, path: list[str | int]) -> Any | None:
 
 
 class UserAssignedNameMixin(Entity, abc.ABC):
+    _attr_has_entity_name = True
+
     @property
     @abc.abstractmethod
     def comp_index(self) -> int:
@@ -62,3 +66,11 @@ class InternalNotificationMixin(Entity, abc.ABC):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         self.async_on_remove(self.shared.add_listener(self.handle_notification))
+
+
+class DelayedCoordinatorRefreshMixin:
+    async def delayed_request_refresh(self) -> None:
+        # HACK: dingz takes some time to realize and update its internal state
+        await asyncio.sleep(1.0)
+        coordinator = cast(DataUpdateCoordinator[Any], self.coordinator)  # type: ignore
+        await coordinator.async_request_refresh()

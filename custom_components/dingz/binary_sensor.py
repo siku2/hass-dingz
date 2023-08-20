@@ -44,7 +44,6 @@ class Input(
 
         self.__index = index
 
-        self._attr_has_entity_name = True
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-input-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
         self._attr_translation_key = "input"

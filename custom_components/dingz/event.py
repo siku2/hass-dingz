@@ -62,7 +62,6 @@ class Button(EventEntity, UserAssignedNameMixin, InternalNotificationMixin):
         super().__init__(shared)
         self.__index = index
 
-        self._attr_has_entity_name = True
         self._attr_unique_id = f"{shared.mac_addr}-button-{index}"
         self._attr_device_info = shared.device_info
         self._attr_translation_key = "button"

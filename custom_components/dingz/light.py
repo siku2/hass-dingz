@@ -15,6 +15,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
+from .helpers import DelayedCoordinatorRefreshMixin, UserAssignedNameMixin
 from .shared import Shared, StateCoordinator
 
 
@@ -26,6 +27,11 @@ async def async_setup_entry(
     shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
 
     entities: list[LightEntity] = [FrontLed(shared.state)]
+
+    for index, dingz_output in enumerate(shared.config.data.outputs):
+        if dingz_output.get("active", False) and dingz_output.get("type") == "light":
+            entities.append(Dimmer(shared.state, index))
+
     async_add_entities(entities)
 
 
@@ -115,3 +121,87 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
             )
         )
         await self.coordinator.async_request_refresh()
+
+
+class Dimmer(
+    CoordinatorEntity[StateCoordinator],
+    LightEntity,
+    UserAssignedNameMixin,
+    DelayedCoordinatorRefreshMixin,
+):
+    _attr_supported_features = LightEntityFeature.TRANSITION
+
+    def __init__(self, coordinator: StateCoordinator, index: int) -> None:
+        super().__init__(coordinator)
+        self.__index = index
+
+        self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-dimmer-{index}"
+        self._attr_device_info = coordinator.shared.device_info
+        self._attr_translation_key = "dimmer"
+
+    @property
+    def dingz_output_config(self) -> api.OutputConfig:
+        try:
+            return self.coordinator.shared.config.data.outputs[self.__index]
+        except LookupError:
+            return api.OutputConfig()
+
+    @property
+    def dingz_dimmable(self) -> bool:
+        try:
+            return self.dingz_output_config["light"]["dimmable"]
+        except LookupError:
+            return False
+
+    @property
+    def dingz_dimmer_state(self) -> api.StateDimmer:
+        try:
+            return self.coordinator.data["dimmers"][self.__index]
+        except LookupError:
+            return api.StateDimmer()
+
+    @property
+    def comp_index(self) -> int:
+        return self.__index
+
+    @property
+    def user_given_name(self) -> str | None:
+        return self.dingz_output_config.get("name")
+
+    @property
+    def color_mode(self) -> ColorMode | str | None:
+        return ColorMode.BRIGHTNESS if self.dingz_dimmable else ColorMode.ONOFF
+
+    @property
+    def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
+        return {ColorMode.BRIGHTNESS} if self.dingz_dimmable else {ColorMode.ONOFF}
+
+    @property
+    def is_on(self) -> bool | None:
+        return self.dingz_dimmer_state.get("on")
+
+    @property
+    def brightness(self) -> int | None:
+        output = self.dingz_dimmer_state.get("output")
+        if output is None:
+            return None
+        return 255 * output // 100
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        try:
+            brightness = kwargs[ATTR_BRIGHTNESS]
+        except LookupError:
+            value = None
+        else:
+            value = 100 * brightness // 255
+
+        await self.coordinator.shared.client.set_dimmer(
+            self.__index, "on", value=value, time=kwargs.get(ATTR_TRANSITION)
+        )
+        await self.delayed_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.shared.client.set_dimmer(
+            self.__index, "off", time=kwargs.get(ATTR_TRANSITION)
+        )
+        await self.delayed_request_refresh()

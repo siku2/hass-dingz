@@ -434,6 +434,7 @@ class Client:
         path: str,
         data: dict[str, Any] | str,
         *,
+        as_query_params: bool = False,
         attempts: int = 3,
         retry_delay: float = 3.0,
     ) -> None:
@@ -441,6 +442,8 @@ class Client:
         kwargs = {}
         if isinstance(data, str):
             kwargs["data"] = data
+        elif as_query_params:
+            kwargs["params"] = data
         else:
             kwargs["json"] = data
 
@@ -514,6 +517,32 @@ class Client:
         # we roll our own encoding here because dingz doesn't support proper form-encoding. semicolons are usually escaped, but dingz can't deal with that at all
         encoded = "&".join(f"{key}={value}" for key, value in state.items())
         await self._post("led/set", encoded)
+
+    async def set_dimmer(
+        self,
+        index: int,
+        action: Literal["on"]
+        | Literal["off"]
+        | Literal["toggle"]
+        | Literal["dim"]
+        | Literal["pulse"],
+        *,
+        value: int | None = None,
+        ramp: int | None = None,
+        time: float | None = None,
+        reset_manual_time: bool | None = None,
+    ) -> None:
+        params = {
+            key: value
+            for key, value in (
+                ("value", value),
+                ("ramp", ramp),
+                ("time", time),
+                ("reset_manual_time", reset_manual_time),
+            )
+            if value is not None
+        }
+        await self._post(f"dimmer/{index}/{action}", params, as_query_params=True)
 
     async def reset_pir_time(self, index: int) -> None:
         await self._post(f"pir/{index}/reset_time", {})

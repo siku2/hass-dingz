@@ -80,6 +80,10 @@
         "light": {
             "front": {
                 "name": "Front"
+            },
+            "dimmer": {
+                "name": "{name}",
+                "name_fallback": "Light {position}"
             }
         },
         "number": {
