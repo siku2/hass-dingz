@@ -19,20 +19,26 @@ async def async_setup_entry(
     entities: list[EventEntity] = []
 
     try:
-        pirs = shared.state.data["sensors"]["pirs"]
+        mqtt_enabled = shared.config.data.services["mqtt"]["enable"]
     except LookupError:
-        pirs = []
-    for index, dingz_pir in enumerate(pirs):
-        if dingz_pir and dingz_pir.get("enabled", False):
-            entities.append(Pir(shared, index=index))
+        mqtt_enabled = False
 
-    try:
-        buttons = shared.config.data.buttons["buttons"]
-    except LookupError:
-        buttons = []
-    for index, dingz_button in enumerate(buttons):
-        if dingz_button.get("active", False):
-            entities.append(Button(shared, index=index))
+    if mqtt_enabled:
+        try:
+            pirs = shared.state.data["sensors"]["pirs"]
+        except LookupError:
+            pirs = []
+        for index, dingz_pir in enumerate(pirs):
+            if dingz_pir and dingz_pir.get("enabled", False):
+                entities.append(Pir(shared, index=index))
+
+        try:
+            buttons = shared.config.data.buttons["buttons"]
+        except LookupError:
+            buttons = []
+        for index, dingz_button in enumerate(buttons):
+            if dingz_button.get("active", False):
+                entities.append(Button(shared, index=index))
 
     async_add_entities(entities)
 

@@ -83,6 +83,12 @@
                 }
             }
         },
+        "fan": {
+            "fan": {
+                "name": "{name}",
+                "name_fallback": "Fan {position}"
+            }
+        },
         "light": {
             "front": {
                 "name": "Front"

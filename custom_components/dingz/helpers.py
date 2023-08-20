@@ -3,9 +3,13 @@ import asyncio
 from typing import Any, cast
 
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
 
-from .shared import InternalNotification, Shared
+from . import api
+from .shared import InternalNotification, Shared, StateCoordinator
 
 
 def compile_json_path(raw: str) -> list[str | int]:
@@ -74,3 +78,33 @@ class DelayedCoordinatorRefreshMixin:
         await asyncio.sleep(1.0)
         coordinator = cast(DataUpdateCoordinator[Any], self.coordinator)  # type: ignore
         await coordinator.async_request_refresh()
+
+
+class DingzOutputEntity(CoordinatorEntity[StateCoordinator], UserAssignedNameMixin):
+    def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
+        super().__init__(coordinator)
+        self.__index = index
+
+        self._attr_device_info = self.coordinator.shared.device_info
+
+    @property
+    def comp_index(self) -> int:
+        return self.__index
+
+    @property
+    def dingz_dimmer(self) -> api.StateDimmer:
+        try:
+            return self.coordinator.data["dimmers"][self.__index]
+        except LookupError:
+            return api.StateDimmer()
+
+    @property
+    def dingz_output_config(self) -> api.OutputConfig:
+        try:
+            return self.coordinator.shared.config.data.outputs[self.__index]
+        except LookupError:
+            return api.OutputConfig()
+
+    @property
+    def user_given_name(self) -> str | None:
+        return self.dingz_output_config.get("name")

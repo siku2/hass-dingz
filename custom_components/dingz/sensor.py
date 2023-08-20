@@ -18,9 +18,13 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt
 
-from . import api
 from .const import DOMAIN
-from .helpers import UserAssignedNameMixin, compile_json_path, json_path_lookup
+from .helpers import (
+    DingzOutputEntity,
+    UserAssignedNameMixin,
+    compile_json_path,
+    json_path_lookup,
+)
 from .shared import Shared, StateCoordinator
 
 
@@ -133,45 +137,24 @@ def _dt_with_hass_tz(s: str) -> datetime | None:
     return dt.as_utc(parsed)
 
 
-class OutputPower(
-    CoordinatorEntity[StateCoordinator], SensorEntity, UserAssignedNameMixin
-):
+class OutputPower(DingzOutputEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = "W"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_translation_key = "output_power"
+
     def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
-        super().__init__(coordinator)
+        super().__init__(coordinator, index=index)
 
-        self.__index = index
-
-        key = f"output-power-{index}"
-        self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-{key}"
-        self._attr_device_info = self.coordinator.shared.device_info
-        self.entity_description = SensorEntityDescription(
-            key=key,
-            device_class=SensorDeviceClass.POWER,
-            native_unit_of_measurement="W",
-            state_class=SensorStateClass.MEASUREMENT,
-            translation_key="output_power",
+        self._attr_unique_id = (
+            f"{self.coordinator.shared.mac_addr}-output-power-{index}"
         )
-
-    @property
-    def dingz_output(self) -> api.OutputConfig:
-        try:
-            return self.coordinator.shared.config.data.outputs[self.__index]
-        except LookupError:
-            return api.OutputConfig()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_output.get("name")
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:
         try:
             power_outputs = self.coordinator.data["sensors"]["power_outputs"]
-            power_output = power_outputs[self.__index]
+            power_output = power_outputs[self.comp_index]
         except LookupError:
             return None
         return power_output.get("value")
@@ -200,7 +183,7 @@ class OutputEnergy(IntegrationSensor, UserAssignedNameMixin):
 
     @property
     def user_given_name(self) -> str | None:
-        return self.__power.dingz_output.get("name")
+        return self.__power.user_given_name
 
     async def async_added_to_hass(self) -> None:
         self._sensor_source_id = self.__power.entity_id
