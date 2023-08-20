@@ -2,6 +2,7 @@
   "domain": "dingz",
   "name": "Dingz",
   "after_dependencies": [
+    "integration",
     "mqtt"
   ],
   "codeowners": [
