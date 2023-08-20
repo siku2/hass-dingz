@@ -38,7 +38,7 @@ The following features have been implemented, but since I'm not actively using t
 - Fan outputs
 
 > [!NOTE]
-> If you're using one of these, be sure to contact me (open an issue or a new discussion). With a bit of help from your side, I can easily improve the integration.
+> If you're using one of these, be sure to contact me (open an issue or a new discussion). With a bit of help, I can easily improve the integration.
 > This also applies to unimplemented features, of course.
 
 And now for the list of things that **won't** be implemented:
