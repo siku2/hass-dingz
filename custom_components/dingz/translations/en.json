@@ -45,6 +45,12 @@
                 "name": "Reset Internal PIR Time"
             }
         },
+        "cover": {
+            "blind": {
+                "name": "{name}",
+                "name_fallback": "Blind {position}"
+            }
+        },
         "event": {
             "button": {
                 "name": "Button {name}",

@@ -24,6 +24,18 @@ class StateDimmer(TypedDict, total=False):
     index: Index
 
 
+class StateBlindPosition(TypedDict, total=False):
+    blind: int
+    lamella: int
+
+
+class StateBlind(TypedDict, total=False):
+    target: StateBlindPosition
+    current: StateBlindPosition
+    readonly: bool
+    index: Index
+
+
 class StateLed(TypedDict, total=False):
     on: bool
     hsv: str
@@ -103,7 +115,7 @@ class StateConfig:
 
 class State(TypedDict, total=False):
     dimmers: list[StateDimmer]
-    blinds: list[Any]
+    blinds: list[StateBlind]
     led: StateLed
     sensors: StateSensors
     dyn_light: StateDynLight
@@ -543,6 +555,36 @@ class Client:
             if value is not None
         }
         await self._post(f"dimmer/{index}/{action}", params, as_query_params=True)
+
+    async def move_blind(
+        self,
+        index: int,
+        action: Literal["stop"]
+        | Literal["up"]
+        | Literal["down"]
+        | Literal["initialize"]
+        | Literal["upstop"]
+        | Literal["downstop"]
+        | Literal["togglestop"],
+        *,
+        time: int | None = None,
+    ) -> None:
+        params = {key: value for key, value in (("time", time),) if value is not None}
+        await self._post(f"shade/{index}/{action}", params, as_query_params=True)
+
+    async def move_blind_position(
+        self,
+        index: int,
+        *,
+        blind: int | None = None,
+        lamella: int | None = None,
+    ) -> None:
+        params = {
+            key: value
+            for key, value in (("blind", blind), ("lamella", lamella))
+            if value is not None
+        }
+        await self._post(f"shade/{index}", params, as_query_params=True)
 
     async def reset_pir_time(self, index: int) -> None:
         await self._post(f"pir/{index}/reset_time", {})
