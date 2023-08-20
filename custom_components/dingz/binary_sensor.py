@@ -3,14 +3,14 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
-from .helpers import UserAssignedNameMixin
-from .shared import Shared, StateCoordinator
+from .helpers import InternalNotificationMixin, UserAssignedNameMixin
+from .shared import InternalNotification, PirNotification, Shared, StateCoordinator
 
 
 async def async_setup_entry(
@@ -31,7 +31,7 @@ async def async_setup_entry(
         pirs = []
     for index, dingz_pir in enumerate(pirs):
         if dingz_pir and dingz_pir.get("enabled", False):
-            entities.append(Motion(shared.state, index=index))
+            entities.append(Motion(shared, index=index))
 
     async_add_entities(entities)
 
@@ -91,18 +91,34 @@ class Input(
         return raw != invert
 
 
-class Motion(CoordinatorEntity[StateCoordinator], BinarySensorEntity):
-    def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
-        super().__init__(coordinator)
+class Motion(
+    CoordinatorEntity[StateCoordinator], BinarySensorEntity, InternalNotificationMixin
+):
+    def __init__(self, shared: Shared, *, index: int) -> None:
+        InternalNotificationMixin.__init__(self, shared)
+        super().__init__(shared.state)
 
         self.__index = index
+        self.__motion: bool | None = None
 
         self._attr_has_entity_name = True
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-motion-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
         self._attr_device_class = BinarySensorDeviceClass.MOTION
         self._attr_translation_key = f"motion_{index}"
-        # TODO: update from mqtt as well
+
+    def handle_notification(self, notification: InternalNotification) -> None:
+        if (
+            isinstance(notification, PirNotification)
+            and notification.index == self.__index
+        ):
+            self.__motion = notification.event_type != "n"
+            self.async_write_ha_state()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self.__motion = self.dingz_pir.get("motion")
+        self.async_write_ha_state()
 
     @property
     def dingz_pir(self) -> api.SensorPir:
@@ -116,4 +132,4 @@ class Motion(CoordinatorEntity[StateCoordinator], BinarySensorEntity):
 
     @property
     def is_on(self) -> bool | None:
-        return self.dingz_pir.get("motion")
+        return self.__motion

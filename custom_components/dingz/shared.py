@@ -105,9 +105,8 @@ class Shared:
     async def _handle_mqtt_pir(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
-        self._notifier.dispatch(
-            PirNotification(index=index, event_type=cast(Any, msg.payload))
-        )
+        event_type = cast(_PirEventType, msg.payload)
+        self._notifier.dispatch(PirNotification(index=index, event_type=event_type))
 
     async def _handle_mqtt_button(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
@@ -162,10 +161,13 @@ class InternalNotification:
     ...
 
 
+_PirEventType = Literal["s"] | Literal["ss"] | Literal["n"]
+
+
 @dataclasses.dataclass(slots=True)
 class PirNotification(InternalNotification):
     index: int
-    event_type: Literal["s"] | Literal["ss"] | Literal["n"]
+    event_type: _PirEventType
 
 
 @dataclasses.dataclass(slots=True)
