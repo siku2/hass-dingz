@@ -130,6 +130,10 @@
                 "name": "{name} Power",
                 "name_fallback": "Output {position} Power"
             },
+            "output_energy": {
+                "name": "{name} Energy",
+                "name_fallback": "Output {position} Energy"
+            },
             "state_time": {
                 "name": "State Time"
             },

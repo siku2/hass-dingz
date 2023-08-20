@@ -3,6 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
+from homeassistant.components.integration.sensor import IntegrationSensor
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -10,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -114,7 +115,13 @@ async def async_setup_entry(
 
     for index, dingz_output in enumerate(shared.config.data.outputs):
         if dingz_output.get("active", False):
-            entities.append(OutputPower(shared.state, index=index))
+            power = OutputPower(shared.state, index=index)
+            entities.extend(
+                (
+                    power,
+                    OutputEnergy(power),
+                )
+            )
 
     async_add_entities(entities)
 
@@ -168,6 +175,37 @@ class OutputPower(
         except LookupError:
             return None
         return power_output.get("value")
+
+
+class OutputEnergy(IntegrationSensor, UserAssignedNameMixin):
+    def __init__(self, power: OutputPower) -> None:
+        shared = power.coordinator.shared
+        super().__init__(
+            integration_method="left",
+            name=None,
+            round_digits=3,
+            source_entity="",  # we only know the power's entity id once it has been added to Home Assistant, so we set this in the 'added_to_hass' callback
+            unique_id=f"{shared.mac_addr}-output-energy-{power.comp_index}",
+            unit_prefix="k",
+            unit_time=UnitOfTime.HOURS,
+            device_info=shared.device_info,
+        )
+        self.__power = power
+
+        self._attr_translation_key = "output_energy"
+
+    @property
+    def comp_index(self) -> int:
+        return self.__power.comp_index
+
+    @property
+    def user_given_name(self) -> str | None:
+        return self.__power.dingz_output.get("name")
+
+    async def async_added_to_hass(self) -> None:
+        self._sensor_source_id = self.__power.entity_id
+        self._source_entity = self.__power.entity_id
+        return await super().async_added_to_hass()
 
 
 class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
