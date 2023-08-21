@@ -86,6 +86,10 @@ class Shared:
                 self.hass,
                 self._sub_state,
                 {
+                    "online": {
+                        "topic": f"dingz/{dingz_id}/online",
+                        "msg_callback": self._handle_mqtt_online,
+                    },
                     "pir": {
                         "topic": f"dingz/{dingz_id}/+/event/pir/+",
                         "msg_callback": self._handle_mqtt_pir,
@@ -107,6 +111,9 @@ class Shared:
 
     def add_listener(self, callback: "_NotificationCallbackT") -> Callable[[], None]:
         return self._notifier.add_listener(callback)
+
+    async def _handle_mqtt_online(self, msg: mqtt.ReceiveMessage) -> None:
+        self._notifier.dispatch(MqttOnlineNotification(online=msg.payload == "true"))
 
     async def _handle_mqtt_pir(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
@@ -187,6 +194,11 @@ class ConfigCoordinator(DataUpdateCoordinator[api.FullDeviceConfig]):
 @dataclasses.dataclass(slots=True)
 class InternalNotification:
     ...
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class MqttOnlineNotification(InternalNotification):
+    online: bool
 
 
 _PirEventType = Literal["s"] | Literal["ss"] | Literal["n"]

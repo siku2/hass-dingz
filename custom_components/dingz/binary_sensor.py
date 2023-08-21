@@ -3,14 +3,25 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
-from .helpers import CoordinatedNotificationStateEntity, UserAssignedNameMixin
-from .shared import InternalNotification, PirNotification, Shared, StateCoordinator
+from .helpers import (
+    CoordinatedNotificationStateEntity,
+    InternalNotificationMixin,
+    UserAssignedNameMixin,
+)
+from .shared import (
+    InternalNotification,
+    MqttOnlineNotification,
+    PirNotification,
+    Shared,
+    StateCoordinator,
+)
 
 
 async def async_setup_entry(
@@ -20,7 +31,8 @@ async def async_setup_entry(
 ) -> None:
     shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
 
-    entities: list[BinarySensorEntity] = []
+    entities: list[BinarySensorEntity] = [MqttOnline(shared)]
+
     for index, dingz_input in enumerate(shared.config.data.inputs):
         if dingz_input.get("active", False):
             entities.append(Input(shared.state, index=index))
@@ -132,5 +144,25 @@ class Motion(CoordinatedNotificationStateEntity, BinarySensorEntity):
         return self.__motion
 
 
-class MqttOnline(CoordinatedNotificationStateEntity, BinarySensorEntity):
-    pass
+class MqttOnline(InternalNotificationMixin, BinarySensorEntity):
+    _attr_has_entity_name = True
+    _attr_translation_key = "mqtt_online"
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, shared: Shared) -> None:
+        super().__init__(shared)
+        self.__online = False
+
+        self._attr_unique_id = f"{shared.mac_addr}-mqtt_online"
+        self._attr_device_info = shared.device_info
+
+    def handle_notification(self, notification: InternalNotification) -> None:
+        if not isinstance(notification, MqttOnlineNotification):
+            return
+        self.__online = notification.online
+        self.async_write_ha_state()
+
+    @property
+    def is_on(self) -> bool | None:
+        return self.__online

@@ -29,6 +29,9 @@
             },
             "motion_1": {
                 "name": "Internal PIR"
+            },
+            "mqtt_online": {
+                "name": "MQTT"
             }
         },
         "button": {
