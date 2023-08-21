@@ -89,36 +89,19 @@ class Blind(
 
     @property
     def current_cover_position(self) -> int | None:
-        # no if position is the same as in HA, or inverted
-        try:
-            return self.dingz_blind["current"]["blind"]
-        except LookupError:
-            return None
+        return self.dingz_blind.get("position")
 
     @property
     def current_cover_tilt_position(self) -> int | None:
-        try:
-            return self.dingz_blind["current"]["lamella"]
-        except LookupError:
-            return None
-
-    def _is_moving_up(self) -> bool | None:
-        try:
-            current_blind = self.dingz_blind["current"]["blind"]
-            target_blind = self.dingz_blind["target"]["blind"]
-        except LookupError:
-            return None
-        if current_blind == target_blind:
-            return None
-        return current_blind < target_blind
+        return self.dingz_blind.get("lamella")
 
     @property
     def is_opening(self) -> bool | None:
-        return self._is_moving_up() is True
+        return self.dingz_blind.get("moving") == "up"
 
     @property
     def is_closing(self) -> bool | None:
-        return self._is_moving_up() is False
+        return self.dingz_blind.get("moving") == "down"
 
     @property
     def is_closed(self) -> bool | None:

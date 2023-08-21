@@ -30,8 +30,11 @@ class StateBlindPosition(TypedDict, total=False):
 
 
 class StateBlind(TypedDict, total=False):
-    target: StateBlindPosition
-    current: StateBlindPosition
+    moving: Literal["up"] | Literal["down"] | Literal["stop"]
+    position: int
+    """closed = 0, open = 100"""
+    lamella: int
+    """closed = 0, open = 100"""
     readonly: bool
     index: Index
 
