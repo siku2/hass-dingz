@@ -1,8 +1,10 @@
 import contextlib
 import dataclasses
+import json
 import logging
 from collections.abc import Callable
 from datetime import timedelta
+from enum import IntEnum
 from typing import Any, Literal, cast
 
 from homeassistant.components import mqtt
@@ -92,6 +94,10 @@ class Shared:
                         "topic": f"dingz/{dingz_id}/+/event/button/+",
                         "msg_callback": self._handle_mqtt_button,
                     },
+                    "motor": {
+                        "topic": f"dingz/{dingz_id}/+/state/motor/+",
+                        "msg_callback": self._handle_mqtt_motor,
+                    },
                 },
             )
             await async_subscribe_topics(self.hass, self._sub_state)
@@ -113,6 +119,28 @@ class Shared:
         index = int(raw)
         self._notifier.dispatch(
             ButtonNotification(index=index, event_type=cast(Any, msg.payload))
+        )
+
+    async def _handle_mqtt_motor(self, msg: mqtt.ReceiveMessage) -> None:
+        (_, _, raw) = msg.topic.rpartition("/")
+        index = int(raw)
+
+        try:
+            payload: dict[str, Any] | Any = json.loads(msg.payload)
+            if not isinstance(payload, dict):
+                raise TypeError()
+        except (json.JSONDecodeError, TypeError):
+            _LOGGER.error("ignoring broken json notification: %s", msg.payload)
+            return
+
+        self._notifier.dispatch(
+            MotorStateNotification(
+                index=index,
+                position=payload["position"],
+                goal=payload.get("goal"),
+                lamella=payload["lamella"],
+                motion=MotorMotion(payload["motion"]),
+            )
         )
 
 
@@ -164,18 +192,34 @@ class InternalNotification:
 _PirEventType = Literal["s"] | Literal["ss"] | Literal["n"]
 
 
-@dataclasses.dataclass(slots=True)
+@dataclasses.dataclass(slots=True, kw_only=True)
 class PirNotification(InternalNotification):
     index: int
     event_type: _PirEventType
 
 
-@dataclasses.dataclass(slots=True)
+@dataclasses.dataclass(slots=True, kw_only=True)
 class ButtonNotification(InternalNotification):
     index: int
     event_type: Literal["p"] | Literal["r"] | Literal["h"] | Literal["m1"] | Literal[
         "m2"
     ] | Literal["m3"] | Literal["m4"] | Literal["m5"]
+
+
+class MotorMotion(IntEnum):
+    STOPPED = 0
+    OPENING = 1
+    CLOSING = 2
+    CALIBRATING = 3
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class MotorStateNotification(InternalNotification):
+    index: int
+    position: int
+    goal: int | None
+    lamella: int
+    motion: MotorMotion
 
 
 _NotificationCallbackT = Callable[[InternalNotification], None]

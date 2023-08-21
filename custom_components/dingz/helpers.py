@@ -2,6 +2,7 @@ import abc
 import asyncio
 from typing import Any, cast
 
+from homeassistant.core import callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -63,6 +64,7 @@ class InternalNotificationMixin(Entity, abc.ABC):
         super().__init__()
         self.shared = shared
 
+    @callback
     @abc.abstractmethod
     def handle_notification(self, notification: InternalNotification) -> None:
         ...
