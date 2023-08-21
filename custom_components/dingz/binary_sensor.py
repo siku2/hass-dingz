@@ -36,7 +36,7 @@ async def async_setup_entry(
 
     for index, dingz_input in enumerate(shared.config.data.inputs):
         if dingz_input.get("active", False):
-            entities.append(Input(shared.state, index=index))
+            entities.append(Input(shared, index=index))
 
     try:
         pirs = shared.state.data["sensors"]["pirs"]

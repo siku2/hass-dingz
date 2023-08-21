@@ -29,12 +29,12 @@ The following features are fully supported and, since I'm actively using them, s
 - Button press events (incl. live updates when used in combination with MQTT)
 - Power and Energy sensors for outputs
 - Various other sensors like brightness, temperature etc.
+- Physical dingz inputs (incl. live updates when used in combination with MQTT)
 
 The following features have been implemented, but since I'm not actively using these configurations, I don't know how well they work.
 
+- Blinds / Motors (incl. live updates when used in combination with MQTT)
 - Thermostats (exposed as climate entites in Home Assistant)
-- Physical dingz inputs
-- Blinds / Motors
 - Fan outputs
 
 > [!NOTE]
