@@ -20,12 +20,18 @@ from homeassistant.util import dt
 
 from .const import DOMAIN
 from .helpers import (
+    CoordinatedNotificationStateEntity,
     DingzOutputEntity,
     UserAssignedNameMixin,
     compile_json_path,
     json_path_lookup,
 )
-from .shared import Shared, StateCoordinator
+from .shared import (
+    InternalNotification,
+    Shared,
+    SimpleSensorStateNotification,
+    StateCoordinator,
+)
 
 
 async def async_setup_entry(
@@ -36,16 +42,7 @@ async def async_setup_entry(
     shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
 
     entities: list[SensorEntity] = [
-        JsonPathSensor(
-            shared.state,
-            SensorEntityDescription(
-                key="sensors.brightness",
-                device_class=SensorDeviceClass.ILLUMINANCE,
-                native_unit_of_measurement="lx",
-                state_class=SensorStateClass.MEASUREMENT,
-                translation_key="brightness",
-            ),
-        ),
+        Brightness(shared),
         JsonPathSensor(
             shared.state,
             SensorEntityDescription(
@@ -192,6 +189,8 @@ class OutputEnergy(IntegrationSensor, UserAssignedNameMixin):
 
 
 class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         coordinator: StateCoordinator,
@@ -202,7 +201,6 @@ class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
     ) -> None:
         super().__init__(coordinator)
 
-        self._attr_has_entity_name = True
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-{desc.key}"
         self._attr_device_info = self.coordinator.shared.device_info
         self.entity_description = desc
@@ -218,3 +216,37 @@ class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
         if self.__transform_fn:
             return self.__transform_fn(value)
         return value
+
+
+class Brightness(CoordinatedNotificationStateEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.ILLUMINANCE
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = "lx"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_translation_key = "brightness"
+
+    def __init__(self, shared: Shared) -> None:
+        super().__init__(shared)
+        self.__brightness: float | None = None
+
+        self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-sensors.brightness"
+        self._attr_device_info = self.coordinator.shared.device_info
+
+    def handle_notification(self, notification: InternalNotification) -> None:
+        if (
+            not isinstance(notification, SimpleSensorStateNotification)
+            or notification.sensor != "light"
+        ):
+            return
+        self.__brightness = notification.value
+        self.async_write_ha_state()
+
+    def handle_state_update(self) -> None:
+        try:
+            self.__brightness = self.coordinator.data["sensors"]["brightness"]
+        except LookupError:
+            pass
+
+    @property
+    def native_value(self) -> StateType | date | datetime | Decimal:
+        return self.__brightness

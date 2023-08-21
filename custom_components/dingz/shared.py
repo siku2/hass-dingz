@@ -102,6 +102,10 @@ class Shared:
                         "topic": f"dingz/{dingz_id}/+/state/motor/+",
                         "msg_callback": self._handle_mqtt_motor,
                     },
+                    "sensor": {
+                        "topic": f"dingz/{dingz_id}/+/sensor/+",
+                        "msg_callback": self._handle_mqtt_sensor,
+                    },
                 },
             )
             await async_subscribe_topics(self.hass, self._sub_state)
@@ -137,7 +141,11 @@ class Shared:
             if not isinstance(payload, dict):
                 raise TypeError()
         except (json.JSONDecodeError, TypeError):
-            _LOGGER.error("ignoring broken json notification: %s", msg.payload)
+            _LOGGER.error(
+                "ignoring broken motor notification (topic = %s): %s",
+                msg.topic,
+                msg.payload,
+            )
             return
 
         self._notifier.dispatch(
@@ -148,6 +156,22 @@ class Shared:
                 lamella=payload["lamella"],
                 motion=MotorMotion(payload["motion"]),
             )
+        )
+
+    async def _handle_mqtt_sensor(self, msg: mqtt.ReceiveMessage) -> None:
+        (_, _, sensor) = msg.topic.rpartition("/")
+
+        try:
+            value = float(msg.payload)
+        except ValueError:
+            _LOGGER.error(
+                "ignoring broken sensor notification (topic = %s): %s",
+                msg.topic,
+                msg.payload,
+            )
+            return
+        self._notifier.dispatch(
+            SimpleSensorStateNotification(sensor=cast(Any, sensor), value=value)
         )
 
 
@@ -232,6 +256,12 @@ class MotorStateNotification(InternalNotification):
     goal: int | None
     lamella: int
     motion: MotorMotion
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class SimpleSensorStateNotification(InternalNotification):
+    sensor: Literal["light"] | Literal["temperature"]
+    value: float
 
 
 _NotificationCallbackT = Callable[[InternalNotification], None]

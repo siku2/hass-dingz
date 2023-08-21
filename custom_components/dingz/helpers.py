@@ -60,6 +60,8 @@ class UserAssignedNameMixin(Entity, abc.ABC):
 
 
 class InternalNotificationMixin(Entity, abc.ABC):
+    _attr_should_poll = False
+
     def __init__(self, shared: Shared) -> None:
         super().__init__()
         self.shared = shared
