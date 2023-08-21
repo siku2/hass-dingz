@@ -21,8 +21,7 @@
     "entity": {
         "binary_sensor": {
             "input": {
-                "name": "{name} Input",
-                "name_fallback": "Input {position}"
+                "name": "Input {position}"
             },
             "motion_0": {
                 "name": "PIR Motion"
@@ -50,14 +49,12 @@
         },
         "cover": {
             "blind": {
-                "name": "{name}",
-                "name_fallback": "Blind {position}"
+                "name": "Blind {position}"
             }
         },
         "event": {
             "button": {
-                "name": "Button {name}",
-                "name_fallback": "Button {position}",
+                "name": "Button {position}",
                 "state": {
                     "p": "Pressed",
                     "r": "Released",
@@ -88,8 +85,7 @@
         },
         "fan": {
             "fan": {
-                "name": "{name}",
-                "name_fallback": "Fan {position}"
+                "name": "Fan {position}"
             }
         },
         "light": {
@@ -97,8 +93,7 @@
                 "name": "Front"
             },
             "dimmer": {
-                "name": "{name}",
-                "name_fallback": "Light {position}"
+                "name": "Light {position}"
             }
         },
         "number": {
@@ -142,12 +137,16 @@
                 }
             },
             "output_power": {
-                "name": "{name} Power",
-                "name_fallback": "Output {position} Power"
+                "name": "Output {position} Power"
+            },
+            "output_power_named": {
+                "name": "{name} Power"
             },
             "output_energy": {
-                "name": "{name} Energy",
-                "name_fallback": "Output {position} Energy"
+                "name": "Output {position} Energy"
+            },
+            "output_energy_named": {
+                "name": "{name} Energy"
             },
             "state_time": {
                 "name": "State Time"
