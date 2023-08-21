@@ -302,6 +302,29 @@ class InputConfigs(TypedDict, total=False):
     inputs: list[InputConfig]
 
 
+class BlindConfig(TypedDict, total=False):
+    active: bool
+    name: str
+    type: Literal["blind"] | str
+    min_value: int
+    max_value: int
+    def_blind: int
+    def_lamella: int
+    group: str
+    auto_calibration: bool
+    shade_up_time: float
+    shade_down_time: float
+    invert_direction: bool
+    lamella_time: float
+    step_duration: int
+    step_interval: int
+    state: str
+
+
+class BlindConfigs(TypedDict, total=False):
+    blinds: list[BlindConfig]
+
+
 class ServicesConfigRemoteButtonsTargets(TypedDict, total=False):
     btn1: Any
     btn2: Any
@@ -389,6 +412,7 @@ class FullDeviceConfig:
     services: ServicesConfig
     inputs: list[InputConfig]
     outputs: list[OutputConfig]
+    blinds: list[BlindConfig]
     buttons: ButtonsConfig
 
 
@@ -497,6 +521,9 @@ class Client:
     async def get_buttons_config(self) -> ButtonsConfig:
         return await self._get("button_config")
 
+    async def get_blinds_config(self) -> BlindConfigs:
+        return await self._get("blind_config")
+
     async def get_full_device_config(self) -> FullDeviceConfig:
         devices = await self.get_device()
         device = next(iter(devices.values()), Device())
@@ -510,12 +537,16 @@ class Client:
         output_config = await self.get_output_config()
         outputs = output_config.get("outputs", [])
 
+        blind_config = await self.get_blinds_config()
+        blinds = blind_config.get("blinds", [])
+
         return FullDeviceConfig(
             device=device,
             system=system,
             services=services,
             inputs=inputs,
             outputs=outputs,
+            blinds=blinds,
             buttons=buttons,
         )
 

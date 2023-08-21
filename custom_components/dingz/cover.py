@@ -72,12 +72,11 @@ class Blind(
             return api.StateBlind()
 
     @property
-    def dingz_output(self) -> api.OutputConfig:
-        # no idea if motors are actually mapped to outputs, but I have no way to test it
+    def dingz_blind_config(self) -> api.BlindConfig:
         try:
-            return self.coordinator.shared.config.data.outputs[self.__index]
+            return self.coordinator.shared.config.data.blinds[self.__index]
         except LookupError:
-            return api.OutputConfig()
+            return api.BlindConfig()
 
     @property
     def comp_index(self) -> int:
@@ -85,7 +84,7 @@ class Blind(
 
     @property
     def user_given_name(self) -> str | None:
-        return self.dingz_output.get("name")
+        return self.dingz_blind_config.get("name")
 
     @property
     def current_cover_position(self) -> int | None:
