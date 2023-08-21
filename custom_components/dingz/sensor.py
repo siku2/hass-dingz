@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Callable
 from datetime import date, datetime
 from decimal import Decimal
@@ -12,7 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfTime
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -232,20 +233,20 @@ class Brightness(CoordinatedNotificationStateEntity, SensorEntity):
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-sensors.brightness"
         self._attr_device_info = self.coordinator.shared.device_info
 
+    @callback
     def handle_notification(self, notification: InternalNotification) -> None:
-        if (
-            not isinstance(notification, SimpleSensorStateNotification)
-            or notification.sensor != "light"
+        if not (
+            isinstance(notification, SimpleSensorStateNotification)
+            and notification.sensor == "light"
         ):
             return
         self.__brightness = notification.value
         self.async_write_ha_state()
 
+    @callback
     def handle_state_update(self) -> None:
-        try:
+        with contextlib.suppress(LookupError):
             self.__brightness = self.coordinator.data["sensors"]["brightness"]
-        except LookupError:
-            pass
 
     @property
     def native_value(self) -> StateType | date | datetime | Decimal:

@@ -1,6 +1,6 @@
 from homeassistant.components.event import EventDeviceClass, EventEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import api
@@ -56,11 +56,15 @@ class Pir(InternalNotificationMixin, EventEntity):
         self._attr_device_info = shared.device_info
         self._attr_translation_key = f"pir_{index}"
 
+    @callback
     def handle_notification(self, notification: InternalNotification) -> None:
-        if isinstance(notification, PirNotification):
-            if notification.index == self.__index:
-                self._trigger_event(notification.event_type)
-                self.async_write_ha_state()
+        if not (
+            isinstance(notification, PirNotification)
+            and notification.index == self.__index
+        ):
+            return
+        self._trigger_event(notification.event_type)
+        self.async_write_ha_state()
 
 
 class Button(InternalNotificationMixin, EventEntity, UserAssignedNameMixin):
@@ -99,8 +103,12 @@ class Button(InternalNotificationMixin, EventEntity, UserAssignedNameMixin):
     def user_given_name(self) -> str | None:
         return self.dingz_button_config.get("name")
 
+    @callback
     def handle_notification(self, notification: InternalNotification) -> None:
-        if isinstance(notification, ButtonNotification):
-            if notification.index == self.__index:
-                self._trigger_event(notification.event_type)
-                self.async_write_ha_state()
+        if not (
+            isinstance(notification, ButtonNotification)
+            and notification.index == self.__index
+        ):
+            return
+        self._trigger_event(notification.event_type)
+        self.async_write_ha_state()

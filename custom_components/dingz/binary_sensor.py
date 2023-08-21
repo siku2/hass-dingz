@@ -1,3 +1,5 @@
+import contextlib
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -6,7 +8,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
@@ -16,11 +17,11 @@ from .helpers import (
     UserAssignedNameMixin,
 )
 from .shared import (
+    InputStateNotification,
     InternalNotification,
     MqttOnlineNotification,
     PirNotification,
     Shared,
-    StateCoordinator,
 )
 
 
@@ -49,13 +50,14 @@ async def async_setup_entry(
 
 
 class Input(
-    CoordinatorEntity[StateCoordinator], BinarySensorEntity, UserAssignedNameMixin
+    CoordinatedNotificationStateEntity, BinarySensorEntity, UserAssignedNameMixin
 ):
     _attr_translation_key = "input"
 
-    def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
-        super().__init__(coordinator)
+    def __init__(self, shared: Shared, *, index: int) -> None:
+        super().__init__(shared)
         self.__index = index
+        self.__is_on: bool | None = None
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-input-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
@@ -87,20 +89,26 @@ class Input(
         elif input_ty == "garage_door_state":
             return BinarySensorDeviceClass.GARAGE_DOOR
         else:
-            return None
+            return BinarySensorDeviceClass.POWER
+
+    @callback
+    def handle_notification(self, notification: InternalNotification) -> None:
+        if not (
+            isinstance(notification, InputStateNotification)
+            and notification.index == self.__index
+        ):
+            return
+        self.__is_on = notification.on
+        self.async_write_ha_state()
+
+    @callback
+    def handle_state_update(self) -> None:
+        with contextlib.suppress(LookupError):
+            self.__is_on = self.coordinator.data["sensors"]["input_state"]
 
     @property
     def is_on(self) -> bool | None:
-        try:
-            raw = self.coordinator.data["sensors"]["input_state"]
-        except LookupError:
-            return None
-
-        try:
-            invert = self.dingz_input_config["input"]["invert"]
-        except LookupError:
-            invert = False
-        return raw != invert
+        return self.__is_on
 
 
 class Motion(CoordinatedNotificationStateEntity, BinarySensorEntity):
@@ -118,12 +126,13 @@ class Motion(CoordinatedNotificationStateEntity, BinarySensorEntity):
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
-        if (
+        if not (
             isinstance(notification, PirNotification)
             and notification.index == self.__index
         ):
-            self.__motion = notification.event_type != "n"
-            self.async_write_ha_state()
+            return
+        self.__motion = notification.event_type != "n"
+        self.async_write_ha_state()
 
     @callback
     def handle_state_update(self) -> None:
@@ -157,6 +166,7 @@ class MqttOnline(InternalNotificationMixin, BinarySensorEntity):
         self._attr_unique_id = f"{shared.mac_addr}-mqtt_online"
         self._attr_device_info = shared.device_info
 
+    @callback
     def handle_notification(self, notification: InternalNotification) -> None:
         if not isinstance(notification, MqttOnlineNotification):
             return

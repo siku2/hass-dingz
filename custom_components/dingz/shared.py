@@ -102,6 +102,10 @@ class Shared:
                         "topic": f"dingz/{dingz_id}/+/state/motor/+",
                         "msg_callback": self._handle_mqtt_motor,
                     },
+                    "input": {
+                        "topic": f"dingz/{dingz_id}/+/state/input/+",
+                        "msg_callback": self._handle_mqtt_input,
+                    },
                     "sensor": {
                         "topic": f"dingz/{dingz_id}/+/sensor/+",
                         "msg_callback": self._handle_mqtt_sensor,
@@ -172,6 +176,13 @@ class Shared:
             return
         self._notifier.dispatch(
             SimpleSensorStateNotification(sensor=cast(Any, sensor), value=value)
+        )
+
+    async def _handle_mqtt_input(self, msg: mqtt.ReceiveMessage) -> None:
+        (_, _, raw) = msg.topic.rpartition("/")
+        index = int(raw)
+        self._notifier.dispatch(
+            InputStateNotification(index=index, on=msg.payload == "1")
         )
 
 
@@ -262,6 +273,12 @@ class MotorStateNotification(InternalNotification):
 class SimpleSensorStateNotification(InternalNotification):
     sensor: Literal["light"] | Literal["temperature"]
     value: float
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class InputStateNotification(InternalNotification):
+    index: int
+    on: bool
 
 
 _NotificationCallbackT = Callable[[InternalNotification], None]

@@ -107,9 +107,9 @@ class Blind(
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
-        if (
-            not isinstance(notification, MotorStateNotification)
-            or notification.index != self.__index
+        if not (
+            isinstance(notification, MotorStateNotification)
+            and notification.index == self.__index
         ):
             return
 
