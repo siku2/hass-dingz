@@ -84,6 +84,7 @@ class Input(
         except LookupError:
             return None
 
+        # TODO: we probably don't even need the input if it isn't a contact
         if input_ty.startswith("pir_"):
             return BinarySensorDeviceClass.MOTION
         elif input_ty == "garage_door_state":
