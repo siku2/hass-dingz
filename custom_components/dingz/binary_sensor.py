@@ -9,7 +9,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
-from .helpers import InternalNotificationMixin, UserAssignedNameMixin
+from .helpers import CoordinatedNotificationStateEntity, UserAssignedNameMixin
 from .shared import InternalNotification, PirNotification, Shared, StateCoordinator
 
 
@@ -39,17 +39,17 @@ async def async_setup_entry(
 class Input(
     CoordinatorEntity[StateCoordinator], BinarySensorEntity, UserAssignedNameMixin
 ):
+    _attr_translation_key = "input"
+
     def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
         super().__init__(coordinator)
-
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-input-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
-        self._attr_translation_key = "input"
 
     @property
-    def dingz_input(self) -> api.InputConfig:
+    def dingz_input_config(self) -> api.InputConfig:
         try:
             return self.coordinator.shared.config.data.inputs[self.__index]
         except LookupError:
@@ -61,12 +61,12 @@ class Input(
 
     @property
     def user_given_name(self) -> str | None:
-        return self.dingz_input.get("name")
+        return self.dingz_input_config.get("name")
 
     @property
     def device_class(self) -> BinarySensorDeviceClass | None:
         try:
-            input_ty = self.dingz_input["input"]["type"]
+            input_ty = self.dingz_input_config["input"]["type"]
         except LookupError:
             return None
 
@@ -85,28 +85,26 @@ class Input(
             return None
 
         try:
-            invert = self.dingz_input["input"]["invert"]
+            invert = self.dingz_input_config["input"]["invert"]
         except LookupError:
             invert = False
         return raw != invert
 
 
-class Motion(
-    CoordinatorEntity[StateCoordinator], BinarySensorEntity, InternalNotificationMixin
-):
-    def __init__(self, shared: Shared, *, index: int) -> None:
-        InternalNotificationMixin.__init__(self, shared)
-        super().__init__(shared.state)
+class Motion(CoordinatedNotificationStateEntity, BinarySensorEntity):
+    _attr_has_entity_name = True
+    _attr_device_class = BinarySensorDeviceClass.MOTION
 
+    def __init__(self, shared: Shared, *, index: int) -> None:
+        super().__init__(shared)
         self.__index = index
         self.__motion: bool | None = None
 
-        self._attr_has_entity_name = True
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-motion-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
-        self._attr_device_class = BinarySensorDeviceClass.MOTION
         self._attr_translation_key = f"motion_{index}"
 
+    @callback
     def handle_notification(self, notification: InternalNotification) -> None:
         if (
             isinstance(notification, PirNotification)
@@ -116,9 +114,8 @@ class Motion(
             self.async_write_ha_state()
 
     @callback
-    def _handle_coordinator_update(self) -> None:
+    def handle_state_update(self) -> None:
         self.__motion = self.dingz_pir.get("motion")
-        self.async_write_ha_state()
 
     @property
     def dingz_pir(self) -> api.SensorPir:
@@ -133,3 +130,7 @@ class Motion(
     @property
     def is_on(self) -> bool | None:
         return self.__motion
+
+
+class MqttOnline(CoordinatedNotificationStateEntity, BinarySensorEntity):
+    pass

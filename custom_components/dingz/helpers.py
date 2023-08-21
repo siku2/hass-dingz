@@ -110,3 +110,21 @@ class DingzOutputEntity(CoordinatorEntity[StateCoordinator], UserAssignedNameMix
     @property
     def user_given_name(self) -> str | None:
         return self.dingz_output_config.get("name")
+
+
+class CoordinatedNotificationStateEntity(
+    CoordinatorEntity[StateCoordinator], InternalNotificationMixin, abc.ABC
+):
+    def __init__(self, shared: Shared) -> None:
+        InternalNotificationMixin.__init__(self, shared)
+        super().__init__(shared.state)
+
+    @callback
+    @abc.abstractmethod
+    def handle_state_update(self) -> None:
+        ...
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self.handle_state_update()
+        super()._handle_coordinator_update()

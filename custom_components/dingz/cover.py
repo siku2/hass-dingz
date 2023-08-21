@@ -10,22 +10,15 @@ from homeassistant.components.cover import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
 from .helpers import (
+    CoordinatedNotificationStateEntity,
     DelayedCoordinatorRefreshMixin,
-    InternalNotificationMixin,
     UserAssignedNameMixin,
 )
-from .shared import (
-    InternalNotification,
-    MotorMotion,
-    MotorStateNotification,
-    Shared,
-    StateCoordinator,
-)
+from .shared import InternalNotification, MotorMotion, MotorStateNotification, Shared
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,15 +38,14 @@ async def async_setup_entry(
         blinds = []
 
     for index, _dingz_blind in enumerate(blinds):
-        entities.append(Blind(shared.state, index=index))
+        entities.append(Blind(shared, index=index))
 
     async_add_entities(entities)
 
 
 class Blind(
-    CoordinatorEntity[StateCoordinator],
+    CoordinatedNotificationStateEntity,
     CoverEntity,
-    InternalNotificationMixin,
     UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
@@ -68,13 +60,13 @@ class Blind(
         | CoverEntityFeature.SET_TILT_POSITION
     )
 
-    def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
-        super().__init__(coordinator)
+    def __init__(self, shared: Shared, *, index: int) -> None:
+        super().__init__(shared)
         self.__index = index
         self.__blind_state = api.StateBlind()
 
-        self._attr_unique_id = f"f{coordinator.shared.mac_addr}-{index}"
-        self._attr_device_info = coordinator.shared.device_info
+        self._attr_unique_id = f"f{shared.mac_addr}-{index}"
+        self._attr_device_info = shared.device_info
 
     @property
     def dingz_blind_config(self) -> api.BlindConfig:
@@ -136,13 +128,12 @@ class Blind(
         self.async_write_ha_state()
 
     @callback
-    def _handle_coordinator_update(self) -> None:
+    def handle_state_update(self) -> None:
         try:
             state = self.coordinator.data["blinds"][self.__index]
         except LookupError:
             return
         self.__blind_state = state.copy()
-        self.async_write_ha_state()
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         await self.coordinator.shared.client.move_blind(self.__index, "up")

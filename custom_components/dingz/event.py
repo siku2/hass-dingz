@@ -43,18 +43,18 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class Pir(EventEntity, InternalNotificationMixin):
+class Pir(InternalNotificationMixin, EventEntity):
+    _attr_has_entity_name = True
+    _attr_device_class = EventDeviceClass.MOTION
+    _attr_event_types = ["s", "ss", "n"]
+
     def __init__(self, shared: Shared, index: int) -> None:
         super().__init__(shared)
         self.__index = index
 
-        self._attr_has_entity_name = True
         self._attr_unique_id = f"{shared.mac_addr}-pir-{index}"
         self._attr_device_info = shared.device_info
         self._attr_translation_key = f"pir_{index}"
-
-        self._attr_device_class = EventDeviceClass.MOTION
-        self._attr_event_types = ["s", "ss", "n"]
 
     def handle_notification(self, notification: InternalNotification) -> None:
         if isinstance(notification, PirNotification):
@@ -63,29 +63,29 @@ class Pir(EventEntity, InternalNotificationMixin):
                 self.async_write_ha_state()
 
 
-class Button(EventEntity, UserAssignedNameMixin, InternalNotificationMixin):
+class Button(InternalNotificationMixin, EventEntity, UserAssignedNameMixin):
+    _attr_translation_key = "button"
+    _attr_device_class = EventDeviceClass.BUTTON
+    _attr_event_types = [
+        "p",
+        "r",
+        "h",
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5",
+    ]
+
     def __init__(self, shared: Shared, index: int) -> None:
         super().__init__(shared)
         self.__index = index
 
         self._attr_unique_id = f"{shared.mac_addr}-button-{index}"
         self._attr_device_info = shared.device_info
-        self._attr_translation_key = "button"
-
-        self._attr_device_class = EventDeviceClass.BUTTON
-        self._attr_event_types = [
-            "p",
-            "r",
-            "h",
-            "m1",
-            "m2",
-            "m3",
-            "m4",
-            "m5",
-        ]
 
     @property
-    def dingz_button(self) -> api.ButtonConfig:
+    def dingz_button_config(self) -> api.ButtonConfig:
         try:
             return self.shared.config.data.buttons["buttons"][self.__index]
         except LookupError:
@@ -97,7 +97,7 @@ class Button(EventEntity, UserAssignedNameMixin, InternalNotificationMixin):
 
     @property
     def user_given_name(self) -> str | None:
-        return self.dingz_button.get("name")
+        return self.dingz_button_config.get("name")
 
     def handle_notification(self, notification: InternalNotification) -> None:
         if isinstance(notification, ButtonNotification):
