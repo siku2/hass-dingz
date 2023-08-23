@@ -158,7 +158,7 @@ class Shared:
                 position=payload["position"],
                 goal=payload.get("goal"),
                 lamella=payload["lamella"],
-                motion=MotorMotion(payload["motion"]),
+                motion=MotorMotion.parse(payload.get("motion", MotorMotion.STOPPED)),
             )
         )
 
@@ -254,10 +254,32 @@ class ButtonNotification(InternalNotification):
 
 
 class MotorMotion(IntEnum):
+    UNKNOWN = -1
     STOPPED = 0
     OPENING = 1
     CLOSING = 2
     CALIBRATING = 3
+
+    @classmethod
+    def parse(cls, value: str | int | "MotorMotion") -> "MotorMotion":
+        if isinstance(value, MotorMotion):
+            return value
+
+        if not isinstance(value, int):
+            # motion is supposed to be an int according to the documentation, but apparently it isn't.
+            # but to cover our bases we support both
+            try:
+                value = int(value)
+            except ValueError as exc:
+                _LOGGER.warn(
+                    f"failed to convert motor motion ({value}) to enum value: {exc}"
+                )
+                value = -1
+        try:
+            return MotorMotion(value)
+        except ValueError:
+            _LOGGER.warn(f"unknown motor motion: {value}")
+            return MotorMotion.UNKNOWN
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
