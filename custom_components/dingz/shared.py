@@ -5,7 +5,7 @@ import logging
 from collections.abc import Callable
 from datetime import timedelta
 from enum import IntEnum
-from typing import Any, Literal, cast
+from typing import Any, Literal, Union, cast
 
 from homeassistant.components import mqtt
 from homeassistant.components.mqtt.subscription import (
@@ -261,7 +261,7 @@ class MotorMotion(IntEnum):
     CALIBRATING = 3
 
     @classmethod
-    def parse(cls, value: str | int | "MotorMotion") -> "MotorMotion":
+    def parse(cls, value: Union[str, int, "MotorMotion"]) -> "MotorMotion":
         if isinstance(value, MotorMotion):
             return value
 
