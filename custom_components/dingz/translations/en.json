@@ -162,7 +162,7 @@
         },
         "text": {
             "mqtt_uri": {
-                "name": "MQTT Uri"
+                "name": "MQTT URI"
             },
             "mqtt_server_crt": {
                 "name": "MQTT Server Certificate"

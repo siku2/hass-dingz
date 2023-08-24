@@ -60,3 +60,12 @@ file.
 ## License
 
 By contributing, you agree that your contributions will be licensed under its MIT License.
+
+## Pull updates from the template repository
+
+```shell
+# add the template repo as a remote
+git remote add template https://github.com/siku2/hass-integration-template.git
+# merge changes
+git merge --squash -e -Xtheirs --allow-unrelated-histories template/main
+```
