@@ -48,6 +48,9 @@ We're almost there, the only thing left is to actually configure the dingz devic
 > [!IMPORTANT]
 > I don't actually know whether dingz devices are able to resolve mDNS names (like `homeassistant.local`).
 > If your device doesn't connect to the Home Assistant, try replacing `homeassistant.local` with the actual IP address of your Home Assistant instance.
+>
+> I also haven't tried to set up a TLS connection using the "Server Certificate" text box. I don't even know what format it expects (hopefully PEM, but maybe it uses raw DER which wouldn't work).
+> If you're playing around with this, please open a new discussion.
 
 ## Debugging
 

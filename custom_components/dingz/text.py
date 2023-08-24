@@ -25,6 +25,7 @@ async def async_setup_entry(
                 key="uri",
                 entity_category=EntityCategory.CONFIG,
                 translation_key="mqtt_uri",
+                pattern=r"^mqtts?:\/\/(?:[^:\n]+:[^@\n]+@)?[^@:\n]+(?::\d+)?$",
             ),
         ),
         MqttJsonPath(
