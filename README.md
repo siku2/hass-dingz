@@ -4,7 +4,9 @@
 [![GitHub Activity](https://img.shields.io/github/commit-activity/y/siku2/hass-dingz.svg?style=for-the-badge)](https://github.com/siku2/hass-dingz/commits/main)
 [![License](https://img.shields.io/github/license/siku2/hass-dingz.svg?style=for-the-badge)](LICENSE)
 
-[![hacs](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
+
+[![GitLocalize](https://gitlocalize.com/repo/8874/whole_project/badge.svg)](https://gitlocalize.com/repo/8874/whole_project?utm_source=badge)
 
 _Integration to integrate with [Dingz](https://www.dingz.ch) devices._
 
@@ -49,5 +51,17 @@ And now for the list of things that **won't** be implemented:
 ## Contributions are welcome
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+
+### Providing translations for other languages
+
+If you would like to use the integration in another language, you can help out by providing the necessary translations.
+
+[Head over to **GitLocalize** to start translating.](https://gitlocalize.com/repo/8874)
+
+If your desired language isn't available there, just open an issue to request it.
+
+You can also just do the translations manually in [custom_components/dingz/translations/](./custom_components/dingz/translations/) and open a pull request with the changes.
+
+<!--  -->
 
 [MQTT Guide]: https://github.com/siku2/hass-dingz/blob/main/docs/mqtt.md
