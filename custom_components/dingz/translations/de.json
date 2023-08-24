@@ -1,0 +1,172 @@
+{
+  "config": {
+    "abort": {
+      "device_already_configured": "Gerät ist bereits konfiguriert"
+    },
+    "error": {
+      "cannot_connect": "Verbindung nicht möglich",
+      "unknown": "Unerwarteter Fehler"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "host": "Host"
+        }
+      },
+      "confirm": {
+        "description": "Eintrag bestätigen?"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "input": {
+        "name": "Eingang {position}"
+      },
+      "motion_0": {
+        "name": "PIR-Bewegung"
+      },
+      "motion_1": {
+        "name": "Interner PIR"
+      },
+      "mqtt_online": {
+        "name": "MQTT"
+      }
+    },
+    "button": {
+      "save_default_config": {
+        "name": "Standardkonfiguration speichern"
+      },
+      "reboot": {
+        "name": "Neustart"
+      },
+      "reset_pir_time_0": {
+        "name": "PIR-Zeit zurücksetzen"
+      },
+      "reset_pir_time_1": {
+        "name": "Interne PIR-Zeit zurücksetzen"
+      }
+    },
+    "cover": {
+      "blind": {
+        "name": "Jalousie {position}"
+      }
+    },
+    "event": {
+      "button": {
+        "name": "Schaltfläche {position}",
+        "state": {
+          "p": "Gedrückt",
+          "r": "Losgelassen",
+          "h": "Halten",
+          "m1": "Klick",
+          "m2": "Doppelklick",
+          "m3": "Dreifachklick",
+          "m4": "Vierfachklick",
+          "m5": "Fünffachklick"
+        }
+      },
+      "pir_0": {
+        "name": "PIR",
+        "state": {
+          "s": "Bewegung",
+          "ss": "Anwesend",
+          "n": "Niemand"
+        }
+      },
+      "pir_1": {
+        "name": "Interner PIR",
+        "state": {
+          "s": "Bewegung",
+          "ss": "Anwesend",
+          "n": "Niemand"
+        }
+      }
+    },
+    "fan": {
+      "fan": {
+        "name": "Ventilator {position}"
+      }
+    },
+    "light": {
+      "front": {
+        "name": "Vorderseite"
+      },
+      "dimmer": {
+        "name": "Licht {position}"
+      }
+    },
+    "number": {
+      "temperature_offset": {
+        "name": "Temperaturoffset"
+      }
+    },
+    "sensor": {
+      "brightness": {
+        "name": "Helligkeit"
+      },
+      "light_state": {
+        "name": "Licht Zustand",
+        "state": {
+          "day": "Tag",
+          "twilight": "Dämmerung",
+          "night": "Nacht"
+        }
+      },
+      "room_temperature": {
+        "name": "Zimmertemperatur"
+      },
+      "uncompensated_temperature": {
+        "name": "Unkompensierte Temperatur"
+      },
+      "cpu_temperature": {
+        "name": "CPU-Temperatur"
+      },
+      "puck_temperature": {
+        "name": "Pucktemperatur"
+      },
+      "fet_temperature": {
+        "name": "FET-Temperatur"
+      },
+      "dyn_light": {
+        "name": "Dynamisches Licht",
+        "state": {
+          "day": "Tag",
+          "twilight": "Dämmerung",
+          "night": "Nacht"
+        }
+      },
+      "output_power": {
+        "name": "Ausgangsleistung {position}"
+      },
+      "output_power_named": {
+        "name": "{name} Leistung"
+      },
+      "output_energy": {
+        "name": "Ausgang {position} Energie"
+      },
+      "output_energy_named": {
+        "name": "{name} Energie"
+      },
+      "state_time": {
+        "name": "Zustandszeit"
+      },
+      "config_timestamp": {
+        "name": "Zeitstempel Konfiguration"
+      }
+    },
+    "switch": {
+      "mqtt_enable": {
+        "name": "MQTT Aktiviert"
+      }
+    },
+    "text": {
+      "mqtt_uri": {
+        "name": "MQTT URI"
+      },
+      "mqtt_server_crt": {
+        "name": "MQTT Serverzertifikat"
+      }
+    }
+  }
+}
