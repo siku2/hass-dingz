@@ -14,7 +14,7 @@ _Integration to integrate with [Dingz](https://www.dingz.ch) devices._
 2. Use HACS to install the integration.
 3. Restart Home Assistant.
 4. Set up the integration using the UI: [![Add Integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=dingz)
-5. **(optional but recommended)** Set up the MQTT connection from dingz to Home Assistant. [Read the Guide](./docs/mqtt.md)
+5. **(optional but recommended)** Set up the MQTT connection from dingz to Home Assistant. [Read the Guide][MQTT Guide]
 
 ## Supported Features
 
@@ -44,8 +44,10 @@ And now for the list of things that **won't** be implemented:
 
 - Dingz firmware updates through Home Assistant. As far as I can tell the dingz doesn't know itself, whether an update is available. They are performed by the mobile app by downloading the firmware blob from somewhere. I'm not planning on reverse engineering this at the moment. Don't hesitate to let me know if you have more information about this though.
 
-[^1]: See the [MQTT Guide](./docs/mqtt.md).
+[^1]: See the [MQTT Guide].
 
 ## Contributions are welcome
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+
+[MQTT Guide]: https://github.com/siku2/hass-dingz/blob/main/docs/mqtt.md
