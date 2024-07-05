@@ -70,7 +70,7 @@ async def async_setup_entry(
                 key="config.timestamp",
                 device_class=SensorDeviceClass.TIMESTAMP,
                 translation_key="config_timestamp",
-                entity_category=EntityCategory.CONFIG,
+                entity_category=EntityCategory.DIAGNOSTIC,
             ),
             transform_fn=lambda raw: dt.utc_from_timestamp(raw),
         ),
