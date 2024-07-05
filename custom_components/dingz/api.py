@@ -276,9 +276,7 @@ class InputConfigInput(TypedDict, total=False):
         "pir_linked"
     ] | Literal["pir_independent"] | Literal["contact_state"] | Literal[
         "contact_free_cooling"
-    ] | Literal[
-        "garage_door_state"
-    ]
+    ] | Literal["garage_door_state"]
     invert: bool
     contact_free_cooling: Any
 
