@@ -1,6 +1,6 @@
 import contextlib
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -169,6 +169,7 @@ class OutputEnergy(IntegrationSensor, UserAssignedNameMixin):
             unique_id=f"{shared.mac_addr}-output-energy-{power.comp_index}",
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
+            max_sub_interval=timedelta(minutes=5),
             device_info=shared.device_info,
         )
         self.__power = power
