@@ -9,14 +9,23 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import api
 from .const import DOMAIN
-from .helpers import DelayedCoordinatorRefreshMixin, UserAssignedNameMixin
-from .shared import Shared, StateCoordinator
+from .helpers import (
+    CoordinatedNotificationStateEntity,
+    DelayedCoordinatorRefreshMixin,
+    UserAssignedNameMixin,
+)
+from .shared import (
+    InternalNotification,
+    LightStateNotification,
+    Shared,
+    StateCoordinator,
+)
 
 
 async def async_setup_entry(
@@ -30,7 +39,7 @@ async def async_setup_entry(
 
     for index, dingz_output in enumerate(shared.config.data.outputs):
         if dingz_output.get("active", False) and dingz_output.get("type") == "light":
-            entities.append(Dimmer(shared.state, index))
+            entities.append(Dimmer(shared, index))
 
     async_add_entities(entities)
 
@@ -124,19 +133,19 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
 
 
 class Dimmer(
-    CoordinatorEntity[StateCoordinator],
+    CoordinatedNotificationStateEntity,
     LightEntity,
     UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
     _attr_supported_features = LightEntityFeature.TRANSITION
 
-    def __init__(self, coordinator: StateCoordinator, index: int) -> None:
-        super().__init__(coordinator)
+    def __init__(self, shared: Shared, index: int) -> None:
+        super().__init__(shared)
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-dimmer-{index}"
-        self._attr_device_info = coordinator.shared.device_info
+        self._attr_device_info = shared.device_info
         self._attr_translation_key = "dimmer"
 
     @property
@@ -176,16 +185,27 @@ class Dimmer(
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
         return {ColorMode.BRIGHTNESS} if self.dingz_dimmable else {ColorMode.ONOFF}
 
-    @property
-    def is_on(self) -> bool | None:
-        return self.dingz_dimmer_state.get("on")
+    @callback
+    def handle_notification(self, notification: InternalNotification) -> None:
+        if not (
+            isinstance(notification, LightStateNotification)
+            and notification.index == self.__index
+        ):
+            return
+        match notification.turn:
+            case "on":
+                self._attr_is_on = True
+            case "off":
+                self._attr_is_on = False
 
-    @property
-    def brightness(self) -> int | None:
-        output = self.dingz_dimmer_state.get("output")
-        if output is None:
-            return None
-        return 255 * output // 100
+        self._attr_brightness = 255 * notification.brightness // 100
+        self.async_write_ha_state()
+
+    @callback
+    def handle_state_update(self) -> None:
+        self._attr_is_on = self.dingz_dimmer_state.get("on")
+        if (output := self.dingz_dimmer_state.get("output")) is not None:
+            self._attr_brightness = 255 * output // 100
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         try:

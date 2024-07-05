@@ -110,6 +110,10 @@ class Shared:
                         "topic": f"dingz/{dingz_id}/+/sensor/+",
                         "msg_callback": self._handle_mqtt_sensor,
                     },
+                    "light": {
+                        "topic": f"dingz/{dingz_id}/+/state/light/+",
+                        "msg_callback": self._handle_mqtt_light,
+                    },
                 },
             )
             await async_subscribe_topics(self.hass, self._sub_state)
@@ -185,6 +189,30 @@ class Shared:
             InputStateNotification(index=index, on=msg.payload == "1")
         )
 
+    async def _handle_mqtt_light(self, msg: mqtt.ReceiveMessage) -> None:
+        (_, _, raw) = msg.topic.rpartition("/")
+        index = int(raw)
+
+        try:
+            payload: dict[str, Any] | Any = json.loads(msg.payload)
+            if not isinstance(payload, dict):
+                raise TypeError()
+        except (json.JSONDecodeError, TypeError):
+            _LOGGER.error(
+                "ignoring broken light notification (topic = %s): %s",
+                msg.topic,
+                msg.payload,
+            )
+            return
+        self._notifier.dispatch(
+            LightStateNotification(
+                index=index,
+                turn=payload["turn"],
+                brightness=payload["brightness"],
+                exception=payload["exception"],
+            )
+        )
+
 
 class StateCoordinator(DataUpdateCoordinator[api.State]):
     shared: Shared
@@ -248,9 +276,16 @@ class PirNotification(InternalNotification):
 @dataclasses.dataclass(slots=True, kw_only=True)
 class ButtonNotification(InternalNotification):
     index: int
-    event_type: Literal["p"] | Literal["r"] | Literal["h"] | Literal["m1"] | Literal[
-        "m2"
-    ] | Literal["m3"] | Literal["m4"] | Literal["m5"]
+    event_type: (
+        Literal["p"]
+        | Literal["r"]
+        | Literal["h"]
+        | Literal["m1"]
+        | Literal["m2"]
+        | Literal["m3"]
+        | Literal["m4"]
+        | Literal["m5"]
+    )
 
 
 class MotorMotion(IntEnum):
@@ -301,6 +336,14 @@ class SimpleSensorStateNotification(InternalNotification):
 class InputStateNotification(InternalNotification):
     index: int
     on: bool
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class LightStateNotification(InternalNotification):
+    index: int
+    turn: Literal["on"] | Literal["off"]
+    brightness: int
+    exception: int
 
 
 _NotificationCallbackT = Callable[[InternalNotification], None]

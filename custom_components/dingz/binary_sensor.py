@@ -57,7 +57,6 @@ class Input(
     def __init__(self, shared: Shared, *, index: int) -> None:
         super().__init__(shared)
         self.__index = index
-        self.__is_on: bool | None = None
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-input-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
@@ -99,17 +98,13 @@ class Input(
             and notification.index == self.__index
         ):
             return
-        self.__is_on = notification.on
+        self._attr_is_on = notification.on
         self.async_write_ha_state()
 
     @callback
     def handle_state_update(self) -> None:
         with contextlib.suppress(LookupError):
-            self.__is_on = self.coordinator.data["sensors"]["input_state"]
-
-    @property
-    def is_on(self) -> bool | None:
-        return self.__is_on
+            self._attr_is_on = self.coordinator.data["sensors"]["input_state"]
 
 
 class Motion(CoordinatedNotificationStateEntity, BinarySensorEntity):
