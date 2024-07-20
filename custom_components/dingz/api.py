@@ -251,7 +251,7 @@ class OutputConfigLight(TypedDict, total=False):
 class OutputConfig(TypedDict, total=False):
     active: bool
     name: str
-    type: Literal["light"] | Literal["fan"] | str
+    type: Literal["light"] | Literal["fan"] | Literal["power_socket"] | str
     groups: str
     feedback: OutputConfigFeedback
     light: OutputConfigLight

@@ -158,6 +158,9 @@
         "switch": {
             "mqtt_enable": {
                 "name": "MQTT Enable"
+            },
+            "power_socket": {
+                "name": "Power Socket {position}"
             }
         },
         "text": {
