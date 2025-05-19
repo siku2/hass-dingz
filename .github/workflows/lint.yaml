@@ -16,14 +16,10 @@ jobs:
       - name: "Checkout the repository"
         uses: "actions/checkout@v4"
 
-      - name: "Set up Python"
-        uses: actions/setup-python@v5
+      - name: "Lint"
+        uses: astral-sh/ruff-action@v3
+
+      - name: "Check formatting"
+        uses: astral-sh/ruff-action@v3
         with:
-          python-version-file: pyproject.toml
-          cache: "pip"
-
-      - name: "Install requirements"
-        run: python3 -m pip install pyproject.toml
-
-      - name: "Run"
-        run: python3 -m ruff check --output-format=github .
+          args: "format --check --diff"
