@@ -2,13 +2,15 @@ import logging
 from typing import Any
 
 from homeassistant.components.climate import (
-    ATTR_TEMPERATURE,
     ClimateEntity,
+)
+from homeassistant.components.climate.const import (
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -43,7 +45,9 @@ async def async_setup_entry(
 
 
 class Climate(
-    CoordinatorEntity[StateCoordinator], ClimateEntity, DelayedCoordinatorRefreshMixin
+    CoordinatorEntity[StateCoordinator],
+    ClimateEntity,
+    DelayedCoordinatorRefreshMixin,
 ):
     def __init__(self, coordinator: StateCoordinator) -> None:
         super().__init__(coordinator)

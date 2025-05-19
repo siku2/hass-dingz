@@ -50,7 +50,9 @@ async def async_setup_entry(
 
 
 class Input(
-    CoordinatedNotificationStateEntity, BinarySensorEntity, UserAssignedNameMixin
+    CoordinatedNotificationStateEntity,
+    BinarySensorEntity,
+    UserAssignedNameMixin,
 ):
     _attr_translation_key = "input"
 

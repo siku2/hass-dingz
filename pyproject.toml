@@ -54,6 +54,9 @@ keep-runtime-typing = true
 [tool.ruff.lint.mccabe]
 max-complexity = 25
 
+[tool.typos.default.extend-identifiers]
+hass = "hass"
+
 [tool.uv]
 package = false
 

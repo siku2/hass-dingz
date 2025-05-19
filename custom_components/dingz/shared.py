@@ -16,7 +16,7 @@ from homeassistant.components.mqtt.subscription import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from yarl import URL
 
@@ -305,14 +305,14 @@ class MotorMotion(IntEnum):
             try:
                 value = int(value)
             except ValueError as exc:
-                _LOGGER.warn(
+                _LOGGER.warning(
                     f"failed to convert motor motion ({value}) to enum value: {exc}"
                 )
                 value = -1
         try:
             return MotorMotion(value)
         except ValueError:
-            _LOGGER.warn(f"unknown motor motion: {value}")
+            _LOGGER.warning(f"unknown motor motion: {value}")
             return MotorMotion.UNKNOWN
 
 

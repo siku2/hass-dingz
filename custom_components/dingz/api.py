@@ -490,7 +490,7 @@ class Client:
 
         async def once() -> None:
             _LOGGER.debug("post to %s with payload %s", url, data)
-            async with self._session.post(url, **kwargs) as resp:
+            async with self._session.post(url, **kwargs) as resp:  # type: ignore
                 resp.raise_for_status()
 
         async with self._lock:

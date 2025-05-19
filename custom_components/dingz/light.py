@@ -4,8 +4,10 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_HS_COLOR,
     ATTR_TRANSITION,
-    ColorMode,
     LightEntity,
+)
+from homeassistant.components.light.const import (
+    ColorMode,
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
