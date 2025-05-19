@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from homeassistant.components.fan import FanEntity
+from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,6 +40,9 @@ class Fan(
         super().__init__(coordinator, index=index)
 
         self._attr_unique_id = f"f{coordinator.shared.mac_addr}-{index}"
+        self._attr_supported_features = (
+            FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
+        )
 
     @property
     def is_on(self) -> bool | None:
