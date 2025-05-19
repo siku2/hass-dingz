@@ -94,6 +94,9 @@
             },
             "dimmer": {
                 "name": "Light {position}"
+            },
+            "ddi": {
+                "name": "DDI Channel {position}"
             }
         },
         "number": {

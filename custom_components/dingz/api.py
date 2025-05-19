@@ -116,6 +116,19 @@ class StateConfig:
     timestamp: int
 
 
+class StateDdiChannel(TypedDict, total=False):
+    name: str
+    en: bool
+    on: bool
+    brightness: int
+    ct_enabled: bool
+    colour_temperature: int
+    colour_temperature_k: int
+    off_timer_type: str
+    off_timer_id: int
+    off_timer_value: int
+
+
 class State(TypedDict, total=False):
     dimmers: list[StateDimmer]
     blinds: list[StateBlind]
@@ -125,6 +138,7 @@ class State(TypedDict, total=False):
     thermostat: StateThermostat
     wifi: StateWifi
     config: StateConfig
+    ddi_channels: list[StateDdiChannel]
     time: str
 
 
@@ -407,6 +421,29 @@ class ButtonsConfig(TypedDict, total=False):
     buttons: list[ButtonConfig]
 
 
+class DdiChannelColourTemperature(TypedDict, total=False):
+    en: bool
+    range: OutputConfigLightDimmerRange
+    dynamic: OutputConfigLightDimmerDynamic
+
+
+class DdiChannelFeatures(TypedDict, total=False):
+    colour_temperature: DdiChannelColourTemperature
+
+
+class DdiChannelConfig(TypedDict, total=False):
+    name: str
+    en: bool
+    ddi_group_id: int
+    dingz_groups: str
+    use_last_value: bool
+    auto_off_delay: int
+    range: OutputConfigLightDimmerRange
+    dynamic: OutputConfigLightDimmerDynamic
+    features: DdiChannelFeatures
+    feedback: OutputConfigFeedback
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
 class FullDeviceConfig:
     device: Device
@@ -416,6 +453,7 @@ class FullDeviceConfig:
     outputs: list[OutputConfig]
     blinds: list[BlindConfig]
     buttons: ButtonsConfig
+    ddi_channels: list[DdiChannelConfig]
 
 
 class _ReqThrottleLock(asyncio.Lock):
@@ -458,13 +496,21 @@ class Client:
         )  # 200ms for the dingz to recover after every request
 
     async def _get(
-        self, path: str, *, attempts: int = 5, retry_delay: float = 1.0
+        self,
+        path: str,
+        *,
+        attempts: int = 5,
+        retry_delay: float = 1.0,
+        allow_404: bool = False,
     ) -> Any:
         url = self._base_url / "api/v1" / path
 
         async def once() -> Any:
             _LOGGER.debug("fetching from %s", url)
-            async with self._session.get(url, raise_for_status=True) as resp:
+            async with self._session.get(url) as resp:
+                if allow_404 and resp.status == 404:
+                    return None
+                resp.raise_for_status()
                 return await resp.json()
 
         async with self._lock:
@@ -526,12 +572,24 @@ class Client:
     async def get_blinds_config(self) -> BlindConfigs:
         return await self._get("blind_config")
 
+    async def get_ddi_channels_config(self) -> list[DdiChannelConfig]:
+        data = await self._get(
+            "ddi_channels_config",
+            allow_404=True,  # Devices without DDI support will return 404
+        )
+        try:
+            return data["ddi_channels"]
+        except (TypeError, KeyError):
+            # Either data is None, or it doesn't have the expected structure
+            return []
+
     async def get_full_device_config(self) -> FullDeviceConfig:
         devices = await self.get_device()
         device = next(iter(devices.values()), Device())
         system = await self.get_system_config()
         services = await self.get_services_config()
         buttons = await self.get_buttons_config()
+        ddi_channels = await self.get_ddi_channels_config()
 
         input_config = await self.get_input_config()
         inputs = input_config.get("inputs", [])
@@ -550,6 +608,7 @@ class Client:
             outputs=outputs,
             blinds=blinds,
             buttons=buttons,
+            ddi_channels=ddi_channels,
         )
 
     async def update_mqtt_service_config(self, config: ServicesConfigMqtt) -> None:
@@ -591,6 +650,32 @@ class Client:
             if value is not None
         }
         await self._post(f"dimmer/{index}/{action}", params, as_query_params=True)
+
+    async def set_ddi_channel(
+        self,
+        channel: int,
+        action: Literal["on"] | Literal["off"] | Literal["toggle"],
+        *,
+        brightness: int | None = None,
+        time: float | None = None,
+        reset_manual_time: bool | None = None,
+        color_temperature: int | None = None,
+    ) -> None:
+        params = {
+            key: value
+            for key, value in (
+                ("value", brightness),
+                ("time", time),
+                ("reset_manual_time", reset_manual_time),
+                ("ctvalue", color_temperature),
+            )
+            if value is not None
+        }
+        await self._post(
+            f"ddi/channels/{channel}/brightness/{action}",
+            params,
+            as_query_params=True,
+        )
 
     async def move_blind(
         self,

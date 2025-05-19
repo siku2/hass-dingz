@@ -2,6 +2,7 @@ from typing import Any
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP_KELVIN,
     ATTR_HS_COLOR,
     ATTR_TRANSITION,
     LightEntity,
@@ -42,6 +43,10 @@ async def async_setup_entry(
     for index, dingz_output in enumerate(shared.config.data.outputs):
         if dingz_output.get("active", False) and dingz_output.get("type") == "light":
             entities.append(Dimmer(shared, index))
+
+    for index, ddi in enumerate(shared.config.data.ddi_channels):
+        if ddi.get("en", False):
+            entities.append(Ddi(shared, index))
 
     async_add_entities(entities)
 
@@ -225,5 +230,121 @@ class Dimmer(
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self.coordinator.shared.client.set_dimmer(
             self.__index, "off", time=kwargs.get(ATTR_TRANSITION)
+        )
+        await self.delayed_request_refresh()
+
+
+class Ddi(
+    CoordinatedNotificationStateEntity,
+    LightEntity,
+    UserAssignedNameMixin,
+    DelayedCoordinatorRefreshMixin,
+):
+    _attr_supported_features = LightEntityFeature.TRANSITION
+
+    def __init__(self, shared: Shared, index: int) -> None:
+        super().__init__(shared)
+        self.__index = index
+
+        self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-ddi-{index}"
+        self._attr_device_info = shared.device_info
+        self._attr_translation_key = "ddi"
+
+        self._attr_min_color_temp_kelvin = 2700
+        # TODO: why does the api return 404 for values > 6500?
+        self._attr_max_color_temp_kelvin = 6500
+
+    @property
+    def dingz_ddi_channel_config(self) -> api.DdiChannelConfig:
+        try:
+            return self.coordinator.shared.config.data.ddi_channels[self.__index]
+        except LookupError:
+            return api.DdiChannelConfig()
+
+    @property
+    def dingz_ddi_channel_state(self) -> api.StateDdiChannel:
+        try:
+            return self.coordinator.data["ddi_channels"][self.__index]
+        except LookupError:
+            return api.StateDdiChannel()
+
+    @property
+    def comp_index(self) -> int:
+        return self.__index
+
+    @property
+    def user_given_name(self) -> str | None:
+        return self.dingz_ddi_channel_config.get("name")
+
+    @property
+    def color_mode(self) -> ColorMode:
+        # DDI always supports brightness
+        return (
+            ColorMode.COLOR_TEMP
+            if self.dingz_ddi_channel_state.get("ct_enabled", False)
+            else ColorMode.BRIGHTNESS
+        )
+
+    @property
+    def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
+        return {ColorMode.BRIGHTNESS, ColorMode.COLOR_TEMP}
+
+    @callback
+    def handle_notification(self, notification: InternalNotification) -> None:
+        # TODO: implement
+        return
+        # if not (
+        #     isinstance(notification, LightStateNotification)
+        #     and notification.index == self.__index
+        # ):
+        #     return
+        # match notification.turn:
+        #     case "on":
+        #         self._attr_is_on = True
+        #     case "off":
+        #         self._attr_is_on = False
+
+        # self._attr_brightness = 255 * notification.brightness // 100
+        # self.async_write_ha_state()
+
+    @callback
+    def handle_state_update(self) -> None:
+        channel_state = self.dingz_ddi_channel_state
+        self._attr_is_on = channel_state.get("on")
+        if (output := channel_state.get("brightness")) is not None:
+            self._attr_brightness = 255 * output // 100
+        if (temp := channel_state.get("colour_temperature_k")) is not None:
+            self._attr_color_temp_kelvin = temp
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        color_temperature = kwargs.get(ATTR_COLOR_TEMP_KELVIN)
+        brightness = kwargs.get(ATTR_BRIGHTNESS)
+
+        try:
+            brightness = kwargs[ATTR_BRIGHTNESS]
+        except LookupError:
+            brightness = None
+        else:
+            brightness = 100 * brightness // 255
+
+        if brightness is None and color_temperature is not None:
+            # TODO: ct cannot be set without brightness
+            brightness = self.dingz_ddi_channel_state.get("brightness")
+            # If it's still None, we'll let the device deal with it.
+
+        await self.coordinator.shared.client.set_ddi_channel(
+            self.__index,
+            "on",
+            brightness=brightness,
+            color_temperature=color_temperature,
+            time=kwargs.get(ATTR_TRANSITION),
+        )
+        await self.delayed_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.shared.client.set_ddi_channel(
+            self.__index,
+            "off",
+            time=kwargs.get(ATTR_TRANSITION),
         )
         await self.delayed_request_refresh()
