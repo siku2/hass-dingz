@@ -131,5 +131,4 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_confirm()
 
 
-class CannotConnect(HomeAssistantError):
-    ...
+class CannotConnect(HomeAssistantError): ...

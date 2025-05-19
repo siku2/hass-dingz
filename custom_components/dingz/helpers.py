@@ -35,13 +35,11 @@ class UserAssignedNameMixin(Entity, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def comp_index(self) -> int:
-        ...
+    def comp_index(self) -> int: ...
 
     @property
     @abc.abstractmethod
-    def user_given_name(self) -> str | None:
-        ...
+    def user_given_name(self) -> str | None: ...
 
     @property
     def name(self) -> str | None:
@@ -73,8 +71,7 @@ class InternalNotificationMixin(Entity, abc.ABC):
 
     @callback
     @abc.abstractmethod
-    def handle_notification(self, notification: InternalNotification) -> None:
-        ...
+    def handle_notification(self, notification: InternalNotification) -> None: ...
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -128,8 +125,7 @@ class CoordinatedNotificationStateEntity(
 
     @callback
     @abc.abstractmethod
-    def handle_state_update(self) -> None:
-        ...
+    def handle_state_update(self) -> None: ...
 
     @callback
     def _handle_coordinator_update(self) -> None:

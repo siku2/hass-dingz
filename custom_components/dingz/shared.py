@@ -255,8 +255,7 @@ class ConfigCoordinator(DataUpdateCoordinator[api.FullDeviceConfig]):
 
 
 @dataclasses.dataclass(slots=True)
-class InternalNotification:
-    ...
+class InternalNotification: ...
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
