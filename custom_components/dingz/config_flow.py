@@ -4,12 +4,12 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
+from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from yarl import URL
 
 from . import api
@@ -57,7 +57,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
@@ -76,21 +76,28 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await self.async_step_confirm({})
 
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="user",
+            data_schema=STEP_USER_DATA_SCHEMA,
+            errors=errors,
         )
 
     async def async_step_confirm(
         self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
+        assert self._info
         if user_input is not None:
-            assert self._info
             return self.async_create_entry(
                 title=self._info["title"], data=self._info["data"]
             )
 
+        self.context["title_placeholders"] = {
+            "name": self._info["title"],
+        }
         return self.async_show_form(step_id="confirm")
 
-    async def async_step_mqtt(self, discovery_info: MqttServiceInfo) -> FlowResult:
+    async def async_step_mqtt(
+        self, discovery_info: MqttServiceInfo
+    ) -> config_entries.ConfigFlowResult:
         _LOGGER.debug("discovered potential device using mqtt: %s", discovery_info)
         try:
             payload = json.loads(discovery_info.payload)
@@ -116,7 +123,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
-    ) -> FlowResult:
+    ) -> config_entries.ConfigFlowResult:
         _LOGGER.debug("discovered potential device using zeroconf: %s", discovery_info)
         try:
             dingz_id = str(discovery_info.properties["id"])
