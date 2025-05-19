@@ -1,16 +1,16 @@
 # Dingz Home Assistant Integration
 
-[![GitHub Release](https://img.shields.io/github/release/siku2/hass-dingz.svg?style=for-the-badge)](https://github.com/siku2/hass-dingz/releases)
-[![GitHub Activity](https://img.shields.io/github/commit-activity/y/siku2/hass-dingz.svg?style=for-the-badge)](https://github.com/siku2/hass-dingz/commits/main)
-[![License](https://img.shields.io/github/license/siku2/hass-dingz.svg?style=for-the-badge)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/siku2/hass-dingz.svg?style=flat-square)](https://github.com/siku2/hass-dingz/releases)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/docs/faq/custom_repositories)
 
-[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz/docs/faq/custom_repositories)
-
-[![GitLocalize](https://gitlocalize.com/repo/8874/whole_project/badge.svg)](https://gitlocalize.com/repo/8874/whole_project?utm_source=badge)
+[![License](https://img.shields.io/github/license/siku2/hass-dingz.svg?style=flat-square)](LICENSE)
+[![GitHub Activity](https://img.shields.io/github/commit-activity/y/siku2/hass-dingz.svg?style=flat-square)](https://github.com/siku2/hass-dingz/commits/main)
 
 _Integration to integrate with [Dingz](https://www.dingz.ch) devices._
 
 ## Installation
+
+Make sure you have [HACS](https://hacs.xyz) installed.
 
 1. Add this repository as a custom repository to HACS: [![Add Repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=siku2&repository=hass-dingz&category=integration)
 2. Use HACS to install the integration.
@@ -53,6 +53,8 @@ And now for the list of things that **won't** be implemented:
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
 ### Providing translations for other languages
+
+[![GitLocalize](https://gitlocalize.com/repo/8874/whole_project/badge.svg)](https://gitlocalize.com/repo/8874)
 
 If you would like to use the integration in another language, you can help out by providing the necessary translations.
 

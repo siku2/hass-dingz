@@ -15,7 +15,7 @@ Pull requests are the best way to propose changes to the codebase.
 
 1. Fork the repo and create your branch from `main`.
 2. If you've changed something, update the documentation.
-3. Make sure your code lints (using `scripts/lint`).
+3. Make sure your code lints (using `scripts/lint.sh`).
 4. Test you contribution.
 5. Issue that pull request!
 
@@ -66,6 +66,7 @@ By contributing, you agree that your contributions will be licensed under its MI
 ```shell
 # add the template repo as a remote
 git remote add template https://github.com/siku2/hass-integration-template.git
+git remote update
 # merge changes
 git merge --squash -e -Xtheirs --allow-unrelated-histories template/main
 ```
