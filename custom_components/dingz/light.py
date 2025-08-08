@@ -287,7 +287,7 @@ class Ddi(
 
     @property
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
-        return {ColorMode.BRIGHTNESS, ColorMode.COLOR_TEMP}
+        return {ColorMode.COLOR_TEMP}
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
