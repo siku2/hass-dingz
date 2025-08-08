@@ -52,7 +52,7 @@ class UserAssignedNameMixin(Entity, abc.ABC):
             # same as _name_translation_key
             tr_key = f"component.{self.platform.platform_name}.entity.{self.platform.domain}.{self.translation_key}.name"
 
-        tr_fmt: str | None = self.platform.platform_translations.get(tr_key)
+        tr_fmt: str | None = self.platform_data.platform_translations.get(tr_key)
         if name and not tr_fmt:
             # we have a name, but no override for the template, in that case we just use the name given by the user
             tr_fmt = "{name}"
