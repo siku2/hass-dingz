@@ -174,5 +174,11 @@
                 "name": "MQTT Server Certificate"
             }
         }
+    },
+    "issues": {
+        "output_energy_dropped": {
+            "title": "Energy sensors no longer provided",
+            "description": "The dingz energy sensors were never actually provided by the dingz device itself. Rather, the integration automatically set up an integration sensor for the power sensor. Recent changes in Home Assistant broke this somewhat hacky approach. Please manually re-create the integration sensor if you're using it."
+        }
     }
 }

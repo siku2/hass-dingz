@@ -1,6 +1,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 from yarl import URL
 
 from .const import DOMAIN
@@ -40,3 +41,22 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await shared.unload()
 
     return unload_ok
+
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate old entry."""
+    version = (config_entry.version, config_entry.minor_version)
+
+    if version == (1, 1):
+        # We dropped the output energy sensor, tell the user about it!
+        async_create_issue(
+            hass,
+            DOMAIN,
+            f"output_energy_dropped_{config_entry.entry_id}",
+            is_fixable=False,
+            is_persistent=True,
+            severity=IssueSeverity.WARNING,
+            translation_key="output_energy_dropped",
+        )
+
+    return True

@@ -174,5 +174,11 @@
                 "name": "MQTT Serverzertifikat"
             }
         }
+    },
+    "issues": {
+        "output_energy_dropped": {
+            "title": "Energiesensoren werden nicht mehr bereitgestellt",
+            "description": "Die dingz Energiesensoren wurden nie vom dingz-Gerät selbst bereitgestellt. Vielmehr hat die Integration automatisch einen Integrationssensor für den Leistungssensor eingerichtet. Änderungen in Home Assistant machen diesen Ansatz schwierig. Bitte erstelle den Integrationssensor manuell neu, wenn du ihn verwendest."
+        }
     }
 }
