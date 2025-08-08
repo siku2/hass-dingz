@@ -2,7 +2,7 @@
     "name": "Dingz",
     "filename": "dingz.zip",
     "hide_default_branch": true,
-    "homeassistant": "2025.4.4",
+    "homeassistant": "2025.8.0",
     "render_readme": true,
     "zip_release": true
 }
