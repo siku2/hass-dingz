@@ -43,10 +43,10 @@ async def async_setup_entry(
     for index, dingz_output in enumerate(shared.config.data.outputs):
         if dingz_output.get("active", False) and dingz_output.get("type") == "light":
             entities.append(Dimmer(shared, index))
-
-    for index, ddi in enumerate(shared.config.data.ddi_channels):
-        if ddi.get("en", False):
-            entities.append(Ddi(shared, index))
+    if shared.config.data.device.get("ddi_base", False):
+        for index, ddi in enumerate(shared.config.data.ddi_channels):
+            if ddi.get("en", False):
+                entities.append(Ddi(shared, index))
 
     async_add_entities(entities)
 

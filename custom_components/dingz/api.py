@@ -155,6 +155,7 @@ class Device(TypedDict, total=False):
     hw_id_puck: int
     puck_sn: str
     puck_production_date: Any
+    ddi_base: bool
     dip_config: int
     dip_static: bool
     dip_misconf: bool
