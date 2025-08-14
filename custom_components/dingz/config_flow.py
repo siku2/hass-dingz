@@ -39,8 +39,13 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         raise CannotConnect
 
     dingz_id = system_config.get("id")
-    title = system_config.get("dingz_name")
-    if title is None:
+    dingz_name = system_config.get("dingz_name")
+    room_name = system_config.get("room_name")
+    if dingz_name and room_name:
+        title = f"{room_name} - {dingz_name}"
+    elif dingz_name:
+        title = dingz_name
+    else:
         title = dingz_id
 
     return {"title": title, "dingz_id": dingz_id, "data": {"base_url": str(base_url)}}
