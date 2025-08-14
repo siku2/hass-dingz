@@ -41,6 +41,7 @@ class Shared:
         self.hass = hass
         self.client = api.Client(async_get_clientsession(hass), base_url)
         self.state = StateCoordinator(self)
+        self.diag = DiagnosticCoordinator(self)
         self.config = ConfigCoordinator(self)
 
         self._device_info = DeviceInfo()
@@ -64,6 +65,8 @@ class Shared:
             self._mac_addr = dr.format_mac(self.state.data["wifi"]["mac"])
 
         await self.config.async_config_entry_first_refresh()
+
+        # We don't perform a first refresh on the diagnostic coordinator since its entities are disabled by default.
 
         self._device_info.update(
             DeviceInfo(
@@ -231,6 +234,26 @@ class StateCoordinator(DataUpdateCoordinator[api.State]):
             return await self.shared.client.get_state()
         except Exception:
             _LOGGER.exception("update state data failed")
+            raise
+
+
+class DiagnosticCoordinator(DataUpdateCoordinator[api.Ram]):
+    shared: Shared
+
+    def __init__(
+        self,
+        shared: Shared,
+    ) -> None:
+        super().__init__(
+            shared.hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=60)
+        )
+        self.shared = shared
+
+    async def _async_update_data(self) -> api.Ram:
+        try:
+            return await self.shared.client.get_ram()
+        except Exception:
+            _LOGGER.exception("update ram data failed")
             raise
 
 

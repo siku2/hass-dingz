@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfInformation
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -26,6 +26,7 @@ from .helpers import (
     json_path_lookup,
 )
 from .shared import (
+    DiagnosticCoordinator,
     InternalNotification,
     Shared,
     SimpleSensorStateNotification,
@@ -71,6 +72,30 @@ async def async_setup_entry(
                 entity_category=EntityCategory.DIAGNOSTIC,
             ),
             transform_fn=lambda raw: dt.utc_from_timestamp(raw),
+        ),
+        JsonPathSensor(
+            shared.diag,
+            SensorEntityDescription(
+                key="free",
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.DATA_SIZE,
+                native_unit_of_measurement=UnitOfInformation.BYTES,
+                translation_key="diag_free",
+                entity_category=EntityCategory.DIAGNOSTIC,
+                entity_registry_enabled_default=False,
+            ),
+        ),
+        JsonPathSensor(
+            shared.diag,
+            SensorEntityDescription(
+                key="largest_free_block",
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.DATA_SIZE,
+                native_unit_of_measurement=UnitOfInformation.BYTES,
+                translation_key="diag_largest_free_block",
+                entity_category=EntityCategory.DIAGNOSTIC,
+                entity_registry_enabled_default=False,
+            ),
         ),
     ]
 
@@ -151,12 +176,14 @@ class OutputPower(DingzOutputEntity, SensorEntity):
         return power_output.get("value")
 
 
-class JsonPathSensor(CoordinatorEntity[StateCoordinator], SensorEntity):
+class JsonPathSensor(
+    CoordinatorEntity[StateCoordinator | DiagnosticCoordinator], SensorEntity
+):
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: StateCoordinator,
+        coordinator: StateCoordinator | DiagnosticCoordinator,
         desc: SensorEntityDescription,
         *,
         transform_fn: Callable[[Any], StateType | date | datetime | Decimal]

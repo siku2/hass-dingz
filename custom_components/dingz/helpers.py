@@ -22,6 +22,9 @@ def compile_json_path(raw: str) -> list[str | int]:
 
 
 def json_path_lookup(value: Any, path: list[str | int]) -> Any | None:
+    if value is None:
+        # The initial value could be 'None' because the state hasn't been fetched yet.
+        return None
     try:
         for key in path:
             value = value[key]

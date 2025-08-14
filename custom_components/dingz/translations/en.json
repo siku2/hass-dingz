@@ -156,6 +156,12 @@
             },
             "config_timestamp": {
                 "name": "Config Timestamp"
+            },
+            "diag_free": {
+                "name": "Free Memory"
+            },
+            "diag_largest_free_block": {
+                "name": "Largest Free Block"
             }
         },
         "switch": {
