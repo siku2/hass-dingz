@@ -11,6 +11,11 @@ from yarl import URL
 _LOGGER = logging.getLogger(__name__)
 
 
+class Ram(TypedDict, total=True):
+    free: int
+    largest_free_block: int
+
+
 class Index(TypedDict, total=False):
     relative: int
     absolute: int
@@ -480,6 +485,10 @@ class _ReqThrottleLock(asyncio.Lock):
         return super().release()
 
 
+class NotEnoughRamError(Exception):
+    """Raised when the device does not have enough free RAM to return a response."""
+
+
 class Client:
     @property
     def base_url(self) -> URL:
@@ -503,6 +512,7 @@ class Client:
         attempts: int = 5,
         retry_delay: float = 1.0,
         allow_404: bool = False,
+        check_out_of_ram: bool = True,
     ) -> Any:
         url = self._base_url / "api/v1" / path
 
@@ -514,8 +524,15 @@ class Client:
                 resp.raise_for_status()
                 return await resp.json()
 
-        async with self._lock:
-            return await _repeat(once, attempts=attempts, retry_delay=retry_delay)
+        try:
+            async with self._lock:
+                return await _repeat(once, attempts=attempts, retry_delay=retry_delay)
+        except aiohttp.ClientResponseError as exc:
+            # Getting back a 5xx code usually means the device doesn't have enough ram.
+            if check_out_of_ram and exc.code >= 500 and exc.code < 600:
+                _LOGGER.warning("Checking if device is out of RAM.")
+                await self._assert_enough_ram()
+            raise
 
     async def _post(
         self,
@@ -548,6 +565,21 @@ class Client:
 
     async def _post_system_config(self, config: SystemConfig) -> None:
         await self._post("system_config", cast(dict[str, Any], config))
+
+    async def get_ram(self) -> Ram:
+        return await self._get("ram", check_out_of_ram=False)
+
+    async def _assert_enough_ram(self) -> None:
+        ram = await self.get_ram()
+        free = ram["free"]
+        largest_free_block = ram["largest_free_block"]
+
+        # Somewhat arbitrary limits reported by iolo.
+        out_of_ram = free < 30000 or largest_free_block < 1500
+        if out_of_ram:
+            raise NotEnoughRamError(
+                f"Not enough RAM: {free} free, {largest_free_block} largest free block"
+            )
 
     async def get_state(self) -> State:
         return await self._get("state")
