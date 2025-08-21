@@ -90,7 +90,7 @@
         },
         "light": {
             "front": {
-                "name": "Vorderseite"
+                "name": "Front LED"
             },
             "dimmer": {
                 "name": "Licht {position}"
@@ -132,7 +132,7 @@
                 "name": "FET-Temperatur"
             },
             "dyn_light": {
-                "name": "Dynamisches Licht",
+                "name": "Tagesmodus",
                 "state": {
                     "day": "Tag",
                     "twilight": "Dämmerung",
