@@ -4,7 +4,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 from yarl import URL
 
-from .const import DOMAIN
+from .const import CONF_BASE_URL, DOMAIN
 from .shared import Shared
 
 PLATFORMS: list[Platform] = [
@@ -23,7 +23,7 @@ PLATFORMS: list[Platform] = [
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    shared = Shared(hass, URL(entry.data["base_url"]))
+    shared = Shared(hass, URL(entry.data[CONF_BASE_URL]))
     await shared.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})

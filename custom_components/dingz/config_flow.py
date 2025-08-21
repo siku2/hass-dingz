@@ -12,7 +12,7 @@ from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from yarl import URL
 
 from . import api
-from .const import DOMAIN
+from .const import CONF_BASE_URL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     else:
         title = dingz_id
 
-    return {"title": title, "dingz_id": dingz_id, "data": {"base_url": str(base_url)}}
+    return {
+        "title": title,
+        "dingz_id": dingz_id,
+        "data": {CONF_BASE_URL: str(base_url)},
+    }
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -121,7 +125,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         _LOGGER.debug("mqtt discovery: id=%s, ip=%s", dingz_id, ip)
         await self.async_set_unique_id(dingz_id)
-        self._abort_if_unique_id_configured(error=_ERROR_DEVICE_ALREADY_CONFIGURED)
+        self._abort_if_unique_id_configured(
+            {
+                CONF_BASE_URL: f"http://{ip}",
+            },
+            error=_ERROR_DEVICE_ALREADY_CONFIGURED,
+        )
 
         self._info = await validate_input(self.hass, {"host": ip})
         return await self.async_step_confirm()
@@ -137,7 +146,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         _LOGGER.debug("zeroconf discovery: id=%s, ip=%s", dingz_id, discovery_info.host)
         await self.async_set_unique_id(dingz_id)
-        self._abort_if_unique_id_configured(error=_ERROR_DEVICE_ALREADY_CONFIGURED)
+        self._abort_if_unique_id_configured(
+            {
+                CONF_BASE_URL: f"http://{discovery_info.host}",
+            },
+            error=_ERROR_DEVICE_ALREADY_CONFIGURED,
+        )
 
         self._info = await validate_input(self.hass, {"host": discovery_info.host})
         return await self.async_step_confirm()
