@@ -100,7 +100,7 @@ jobs:
           zip '${{ needs.prepare.outputs.hacs_filename }}' -r ./
 
       - name: "Create release"
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: '${{ needs.prepare.outputs.release_body }}'
           tag_name: '${{ needs.prepare.outputs.tag_name }}'
