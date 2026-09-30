@@ -277,17 +277,22 @@ class Ddi(
         return self.dingz_ddi_channel_config.get("name")
 
     @property
+    def dingz_ct_enabled(self) -> bool:
+        try:
+            return self.dingz_ddi_channel_config["features"]["colour_temperature"]["en"]
+        except LookupError:
+            return False
+
+    @property
     def color_mode(self) -> ColorMode:
         # DDI always supports brightness
-        return (
-            ColorMode.COLOR_TEMP
-            if self.dingz_ddi_channel_state.get("ct_enabled", False)
-            else ColorMode.BRIGHTNESS
-        )
+        return ColorMode.COLOR_TEMP if self.dingz_ct_enabled else ColorMode.BRIGHTNESS
 
     @property
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
-        return {ColorMode.COLOR_TEMP}
+        return (
+            {ColorMode.COLOR_TEMP} if self.dingz_ct_enabled else {ColorMode.BRIGHTNESS}
+        )
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
