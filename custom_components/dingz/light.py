@@ -189,7 +189,7 @@ class Dimmer(
         return ColorMode.BRIGHTNESS if self.dingz_dimmable else ColorMode.ONOFF
 
     @property
-    def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
+    def self) -> set[ColorMode] | set[str] | None:
         return {ColorMode.BRIGHTNESS} if self.dingz_dimmable else {ColorMode.ONOFF}
 
     @callback
@@ -290,7 +290,9 @@ class Ddi(
 
     @property
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
-        return {ColorMode.COLOR_TEMP} if self.dingz_ct_enabled else {ColorMode.BRIGHTNESS}
+        return (
+            {ColorMode.COLOR_TEMP} if self.dingz_ct_enabled else {ColorMode.BRIGHTNESS}
+        )
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
