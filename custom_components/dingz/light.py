@@ -189,7 +189,7 @@ class Dimmer(
         return ColorMode.BRIGHTNESS if self.dingz_dimmable else ColorMode.ONOFF
 
     @property
-    def self) -> set[ColorMode] | set[str] | None:
+    def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
         return {ColorMode.BRIGHTNESS} if self.dingz_dimmable else {ColorMode.ONOFF}
 
     @callback
