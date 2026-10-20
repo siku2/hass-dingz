@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -21,6 +22,11 @@ from .helpers import (
 from .shared import InternalNotification, MotorMotion, MotorStateNotification, Shared
 
 _LOGGER = logging.getLogger(__name__)
+
+# Home Assistant services for position and tilt arrive as separate calls (HomeKit sends
+# them within a few milliseconds). The dingz API accepts both targets in a single request
+# (POST shade/<n>?blind=..&lamella=..), so requests arriving within this window are merged.
+_TARGET_COALESCE_WINDOW = 0.15
 
 
 async def async_setup_entry(
@@ -64,6 +70,8 @@ class Blind(
         super().__init__(shared)
         self.__index = index
         self.__blind_state = api.StateBlind()
+        self.__pending_target: dict[str, int] = {}
+        self.__pending_flush: asyncio.Future[None] | None = None
 
         self._attr_unique_id = f"f{shared.mac_addr}-{index}"
         self._attr_device_info = shared.device_info
@@ -147,26 +155,38 @@ class Blind(
         await self.coordinator.shared.client.move_blind(self.__index, "stop")
         await self.delayed_request_refresh()
 
-    async def async_set_cover_position(self, **kwargs: Any) -> None:
-        await self.coordinator.shared.client.move_blind_position(
-            self.__index, blind=kwargs[ATTR_POSITION]
-        )
+    async def __queue_target(
+        self, *, blind: int | None = None, lamella: int | None = None
+    ) -> None:
+        """Collect position/tilt targets and send them to the dingz in one request."""
+        if blind is not None:
+            self.__pending_target["blind"] = blind
+        if lamella is not None:
+            self.__pending_target["lamella"] = lamella
+
+        if self.__pending_flush is None:
+            self.__pending_flush = self.hass.async_create_task(
+                self.__flush_target(), name=f"dingz blind {self.__index} target"
+            )
+        # shield: a cancelled caller must not cancel the request for the other callers
+        await asyncio.shield(self.__pending_flush)
+
+    async def __flush_target(self) -> None:
+        await asyncio.sleep(_TARGET_COALESCE_WINDOW)
+        # take the batch before the request so calls arriving meanwhile start a new one
+        target, self.__pending_target = self.__pending_target, {}
+        self.__pending_flush = None
+        await self.coordinator.shared.client.move_blind_position(self.__index, **target)
         await self.delayed_request_refresh()
+
+    async def async_set_cover_position(self, **kwargs: Any) -> None:
+        await self.__queue_target(blind=kwargs[ATTR_POSITION])
 
     async def async_open_cover_tilt(self, **kwargs: Any) -> None:
-        await self.coordinator.shared.client.move_blind_position(
-            self.__index, lamella=100
-        )
-        await self.delayed_request_refresh()
+        await self.__queue_target(lamella=100)
 
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
-        await self.coordinator.shared.client.move_blind_position(
-            self.__index, lamella=0
-        )
-        await self.delayed_request_refresh()
+        await self.__queue_target(lamella=0)
 
     async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
-        await self.coordinator.shared.client.move_blind_position(
-            self.__index, lamella=kwargs[ATTR_TILT_POSITION]
-        )
-        await self.delayed_request_refresh()
+        await self.__queue_target(lamella=kwargs[ATTR_TILT_POSITION])
