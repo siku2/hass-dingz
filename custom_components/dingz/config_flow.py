@@ -4,7 +4,7 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
@@ -12,7 +12,7 @@ from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from yarl import URL
 
 from . import api
-from .const import CONF_BASE_URL, DOMAIN
+from .const import CONF_BASE_URL, CONF_CHILD_DEVICES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,6 +63,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         super().__init__()
 
         self._info: dict[str, Any] | None = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        return DingzOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -155,6 +162,28 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._info = await validate_input(self.hass, {"host": discovery_info.host})
         return await self.async_step_confirm()
+
+
+class DingzOptionsFlow(config_entries.OptionsFlow):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current_child_devices = self.config_entry.options.get(
+            CONF_CHILD_DEVICES, False
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_CHILD_DEVICES, default=current_child_devices
+                    ): bool,
+                }
+            ),
+        )
 
 
 class CannotConnect(HomeAssistantError): ...

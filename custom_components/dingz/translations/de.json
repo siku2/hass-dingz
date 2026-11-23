@@ -18,6 +18,15 @@
             }
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "child_devices": "Kind-Geräte (Child Devices) für Ausgänge, Jalousien und DDI-Kanäle anlegen"
+                }
+            }
+        }
+    },
     "entity": {
         "binary_sensor": {
             "input": {

@@ -13,21 +13,23 @@ from homeassistant.components.mqtt.subscription import (
     async_subscribe_topics,
     async_unsubscribe_topics,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import ChildDeviceInfo, DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from yarl import URL
 
 from . import api
-from .const import DOMAIN
+from .const import CONF_CHILD_DEVICES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class Shared:
     hass: HomeAssistant
+    entry: ConfigEntry
     client: api.Client
 
     state: "StateCoordinator"
@@ -36,15 +38,18 @@ class Shared:
     def __init__(
         self,
         hass: HomeAssistant,
+        entry: ConfigEntry,
         base_url: URL,
     ) -> None:
         self.hass = hass
+        self.entry = entry
         self.client = api.Client(async_get_clientsession(hass), base_url)
         self.state = StateCoordinator(self)
         self.diag = DiagnosticCoordinator(self)
         self.config = ConfigCoordinator(self)
 
         self._device_info = DeviceInfo()
+        self._parent_device_id: str | None = None
         self._mac_addr: str | None = None
         self._notifier = _Notifier()
         self._sub_state = None
@@ -58,6 +63,26 @@ class Shared:
         assert self._mac_addr is not None
         return self._mac_addr
 
+    @property
+    def use_child_devices(self) -> bool:
+        return bool(self.entry.options.get(CONF_CHILD_DEVICES, False))
+
+    def child_device_info(
+        self,
+        key: str,
+        *,
+        name: str | None = None,
+    ) -> DeviceInfo | ChildDeviceInfo:
+        if not self.use_child_devices or not self._parent_device_id:
+            return self.device_info
+
+        child_name = name.strip() if name and name.strip() else key
+        return ChildDeviceInfo(
+            identifiers={(DOMAIN, f"{self.mac_addr}:{key}")},
+            parent_device_id=self._parent_device_id,
+            name=child_name,
+        )
+
     async def async_config_entry_first_refresh(self) -> None:
         await self.state.async_config_entry_first_refresh()
 
@@ -68,19 +93,24 @@ class Shared:
 
         # We don't perform a first refresh on the diagnostic coordinator since its entities are disabled by default.
 
-        self._device_info.update(
-            DeviceInfo(
-                configuration_url=str(self.client.base_url),
-                connections={(dr.CONNECTION_NETWORK_MAC, self.mac_addr)},
-                identifiers={(DOMAIN, self.mac_addr)},
-                manufacturer="iolo AG",
-                model=self.config.data.device.get("puck_hw_model"),
-                name=self.config.data.system.get("dingz_name"),
-                suggested_area=self.config.data.system.get("room_name"),
-                sw_version=self.config.data.device.get("fw_version"),
-                hw_version=self.config.data.device.get("hw_version"),
-            )
+        self._device_info = DeviceInfo(
+            configuration_url=str(self.client.base_url),
+            connections={(dr.CONNECTION_NETWORK_MAC, self.mac_addr)},
+            identifiers={(DOMAIN, self.mac_addr)},
+            manufacturer="iolo AG",
+            model=self.config.data.device.get("puck_hw_model"),
+            name=self.config.data.system.get("dingz_name"),
+            suggested_area=self.config.data.system.get("room_name"),
+            sw_version=self.config.data.device.get("fw_version"),
+            hw_version=self.config.data.device.get("hw_version"),
         )
+
+        device_registry = dr.async_get(self.hass)
+        parent_entry = device_registry.async_get_or_create_from_info(
+            config_entry_id=self.entry.entry_id,
+            device_info=self._device_info,
+        )
+        self._parent_device_id = parent_entry.id
 
         if mqtt.mqtt_config_entry_enabled(self.hass):
             _LOGGER.info("enabling mqtt integration")
@@ -323,8 +353,6 @@ class MotorMotion(IntEnum):
             return value
 
         if not isinstance(value, int):
-            # motion is supposed to be an int according to the documentation, but apparently it isn't.
-            # but to cover our bases we support both
             try:
                 value = int(value)
             except ValueError as exc:

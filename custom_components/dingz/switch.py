@@ -97,7 +97,11 @@ class PowerSocket(
         self._attr_unique_id = (
             f"{self.coordinator.shared.mac_addr}-power_socket-{index}"
         )
-        self._attr_device_info = shared.device_info
+        self._is_child_device_entity = shared.use_child_devices
+        self._attr_device_info = shared.child_device_info(
+            f"output_{index}",
+            name=self.dingz_output_config.get("name"),
+        )
         self._attr_translation_key = "power_socket"
 
     @property

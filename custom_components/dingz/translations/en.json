@@ -18,6 +18,15 @@
             }
         }
     },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "child_devices": "Create child devices for outputs, blinds, and DDI channels"
+                }
+            }
+        }
+    },
     "entity": {
         "binary_sensor": {
             "input": {
