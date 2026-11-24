@@ -30,7 +30,9 @@ async def async_setup_entry(
 ) -> None:
     shared = config_entry.runtime_data
 
-    entities: list[BinarySensorEntity] = [MqttOnline(shared)]
+    entities: list[BinarySensorEntity] = []
+    if shared.mqtt_enabled:
+        entities.append(MqttOnline(shared))
 
     for index, dingz_input in enumerate(shared.config.data.inputs):
         if dingz_input.get("active", False):

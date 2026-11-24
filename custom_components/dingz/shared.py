@@ -65,6 +65,13 @@ class Shared:
         assert self._mac_addr is not None
         return self._mac_addr
 
+    @property
+    def mqtt_enabled(self) -> bool:
+        try:
+            return bool(self.config.data.services["mqtt"]["enable"])
+        except LookupError:
+            return False
+
     async def async_config_entry_first_refresh(self) -> None:
         await self.state.async_config_entry_first_refresh()
 

@@ -22,12 +22,7 @@ async def async_setup_entry(
 
     entities: list[EventEntity] = []
 
-    try:
-        mqtt_enabled = shared.config.data.services["mqtt"]["enable"]
-    except LookupError:
-        mqtt_enabled = False
-
-    if mqtt_enabled:
+    if shared.mqtt_enabled:
         try:
             pirs = shared.state.data["sensors"]["pirs"]
         except LookupError:
