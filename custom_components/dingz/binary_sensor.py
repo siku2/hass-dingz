@@ -4,19 +4,18 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import api
-from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     InternalNotificationMixin,
     UserAssignedNameMixin,
 )
 from .shared import (
+    DingzConfigEntry,
     InputStateNotification,
     InternalNotification,
     MqttOnlineNotification,
@@ -27,10 +26,10 @@ from .shared import (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: DingzConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
+    shared = config_entry.runtime_data
 
     entities: list[BinarySensorEntity] = [MqttOnline(shared)]
 

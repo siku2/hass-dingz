@@ -391,3 +391,6 @@ class _Notifier:
         _LOGGER.debug("dispatching %s", notification)
         for update_callback in list(self._listeners.values()):
             update_callback(notification)
+
+
+type DingzConfigEntry = ConfigEntry[Shared]

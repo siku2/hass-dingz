@@ -8,17 +8,21 @@ from homeassistant.components.cover import (
     CoverEntity,
     CoverEntityFeature,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import api
-from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     DelayedCoordinatorRefreshMixin,
 )
-from .shared import InternalNotification, MotorMotion, MotorStateNotification, Shared
+from .shared import (
+    DingzConfigEntry,
+    InternalNotification,
+    MotorMotion,
+    MotorStateNotification,
+    Shared,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,10 +34,10 @@ _TARGET_COALESCE_WINDOW = 0.15
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: DingzConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
+    shared = config_entry.runtime_data
 
     entities: list[CoverEntity] = []
 

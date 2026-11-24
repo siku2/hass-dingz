@@ -10,15 +10,13 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfInformation
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt
 
-from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     DingzOutputEntity,
@@ -27,6 +25,7 @@ from .helpers import (
 )
 from .shared import (
     DiagnosticCoordinator,
+    DingzConfigEntry,
     InternalNotification,
     Shared,
     SimpleSensorStateNotification,
@@ -36,10 +35,10 @@ from .shared import (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: DingzConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    shared: Shared = hass.data[DOMAIN][config_entry.entry_id]
+    shared = config_entry.runtime_data
 
     entities: list[SensorEntity] = [
         Brightness(shared),

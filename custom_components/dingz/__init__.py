@@ -5,7 +5,7 @@ from homeassistant.helpers.issue_registry import IssueSeverity, async_create_iss
 from yarl import URL
 
 from .const import CONF_BASE_URL, DOMAIN
-from .shared import Shared
+from .shared import DingzConfigEntry, Shared
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -22,12 +22,11 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:
     shared = Shared(hass, entry, URL(entry.data[CONF_BASE_URL]))
     await shared.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = shared
+    entry.runtime_data = shared
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -39,11 +38,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        shared: Shared | None = hass.data[DOMAIN].pop(entry.entry_id)
-        if shared:
-            await shared.unload()
+        await entry.runtime_data.unload()
 
     return unload_ok
 
