@@ -57,19 +57,19 @@ class Climate(
         self._attr_device_info = coordinator.shared.device_info
         self._attr_name = None  # since there's only one thermostat, use the device name
 
-        self._attr_temperature_unit = "°C"
+        self._attr_native_temperature_unit = "°C"
         self._attr_target_temperature_step = 1.0  # from web frontend
         self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         try:
             return self.coordinator.data["thermostat"]["temp"]
         except LookupError:
             return False
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         try:
             return self.coordinator.data["thermostat"]["target_temp"]
         except LookupError:
