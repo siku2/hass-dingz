@@ -15,7 +15,7 @@ from homeassistant.components.mqtt.subscription import (
     async_unsubscribe_topics,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -130,26 +130,30 @@ class Shared:
     async def unload(self) -> None:
         self._sub_state = async_unsubscribe_topics(self.hass, self._sub_state)
 
-    def add_listener(self, callback: _NotificationCallbackT) -> Callable[[], None]:
-        return self._notifier.add_listener(callback)
+    def add_listener(self, listener: _NotificationCallbackT) -> Callable[[], None]:
+        return self._notifier.add_listener(listener)
 
-    async def _handle_mqtt_online(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_online(self, msg: mqtt.ReceiveMessage) -> None:
         self._notifier.dispatch(MqttOnlineNotification(online=msg.payload == "true"))
 
-    async def _handle_mqtt_pir(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_pir(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
         event_type = cast(_PirEventType, msg.payload)
         self._notifier.dispatch(PirNotification(index=index, event_type=event_type))
 
-    async def _handle_mqtt_button(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_button(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
         self._notifier.dispatch(
             ButtonNotification(index=index, event_type=cast(Any, msg.payload))
         )
 
-    async def _handle_mqtt_motor(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_motor(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
 
@@ -175,7 +179,8 @@ class Shared:
             )
         )
 
-    async def _handle_mqtt_sensor(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_sensor(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, sensor) = msg.topic.rpartition("/")
 
         try:
@@ -191,14 +196,16 @@ class Shared:
             SimpleSensorStateNotification(sensor=cast(Any, sensor), value=value)
         )
 
-    async def _handle_mqtt_input(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_input(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
         self._notifier.dispatch(
             InputStateNotification(index=index, on=msg.payload == "1")
         )
 
-    async def _handle_mqtt_light(self, msg: mqtt.ReceiveMessage) -> None:
+    @callback
+    def _handle_mqtt_light(self, msg: mqtt.ReceiveMessage) -> None:
         (_, _, raw) = msg.topic.rpartition("/")
         index = int(raw)
 
@@ -368,11 +375,11 @@ class _Notifier:
     def __init__(self) -> None:
         self._listeners: dict[Callable[[], None], _NotificationCallbackT] = {}
 
-    def add_listener(self, callback: _NotificationCallbackT) -> Callable[[], None]:
+    def add_listener(self, listener: _NotificationCallbackT) -> Callable[[], None]:
         def remove_listener() -> None:
             self._listeners.pop(remove_listener)
 
-        self._listeners[remove_listener] = callback
+        self._listeners[remove_listener] = listener
         return remove_listener
 
     def dispatch(self, notification: InternalNotification) -> None:
