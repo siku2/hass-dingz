@@ -1,3 +1,4 @@
+import abc
 import contextlib
 import dataclasses
 import json
@@ -18,7 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from yarl import URL
 
 from . import api
@@ -222,64 +223,51 @@ class Shared:
         )
 
 
-class StateCoordinator(DataUpdateCoordinator[api.State]):
+class _DingzCoordinator[T](DataUpdateCoordinator[T], abc.ABC):
     shared: Shared
 
-    def __init__(
-        self,
-        shared: Shared,
-    ) -> None:
+    def __init__(self, shared: Shared, *, name: str, interval: timedelta) -> None:
         super().__init__(
-            shared.hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=30)
+            shared.hass,
+            _LOGGER,
+            config_entry=shared.entry,
+            name=f"{DOMAIN} {name}",
+            update_interval=interval,
         )
         self.shared = shared
 
-    async def _async_update_data(self) -> api.State:
+    async def _async_update_data(self) -> T:
         try:
-            return await self.shared.client.get_state()
-        except Exception:
-            _LOGGER.exception("update state data failed")
-            raise
+            return await self._fetch()
+        except api.NotEnoughRamError as exc:
+            raise UpdateFailed(str(exc)) from exc
+
+    @abc.abstractmethod
+    async def _fetch(self) -> T: ...
 
 
-class DiagnosticCoordinator(DataUpdateCoordinator[api.Ram]):
-    shared: Shared
+class StateCoordinator(_DingzCoordinator[api.State]):
+    def __init__(self, shared: Shared) -> None:
+        super().__init__(shared, name="state", interval=timedelta(seconds=30))
 
-    def __init__(
-        self,
-        shared: Shared,
-    ) -> None:
-        super().__init__(
-            shared.hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=60)
-        )
-        self.shared = shared
-
-    async def _async_update_data(self) -> api.Ram:
-        try:
-            return await self.shared.client.get_ram()
-        except Exception:
-            _LOGGER.exception("update ram data failed")
-            raise
+    async def _fetch(self) -> api.State:
+        return await self.shared.client.get_state()
 
 
-class ConfigCoordinator(DataUpdateCoordinator[api.FullDeviceConfig]):
-    shared: Shared
+class DiagnosticCoordinator(_DingzCoordinator[api.Ram]):
+    def __init__(self, shared: Shared) -> None:
+        super().__init__(shared, name="diagnostics", interval=timedelta(seconds=60))
 
-    def __init__(
-        self,
-        shared: Shared,
-    ) -> None:
-        super().__init__(
-            shared.hass, _LOGGER, name=DOMAIN, update_interval=timedelta(minutes=5)
-        )
-        self.shared = shared
+    async def _fetch(self) -> api.Ram:
+        return await self.shared.client.get_ram()
 
-    async def _async_update_data(self) -> api.FullDeviceConfig:
-        try:
-            return await self.shared.client.get_full_device_config()
-        except Exception:
-            _LOGGER.exception("update config data failed")
-            raise
+
+class ConfigCoordinator(_DingzCoordinator[api.FullDeviceConfig]):
+    def __init__(self, shared: Shared) -> None:
+        super().__init__(shared, name="config", interval=timedelta(minutes=5))
+
+    async def _fetch(self) -> api.FullDeviceConfig:
+        return await self.shared.client.get_full_device_config()
 
 
 @dataclasses.dataclass(slots=True)
