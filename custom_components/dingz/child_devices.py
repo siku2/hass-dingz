@@ -57,14 +57,17 @@ class ChildDevices:
     @callback
     def async_remove_stale(self) -> None:
         dev_reg = dr.async_get(self._shared.hass)
-        expected = {
-            self._identifier(kind, index) for kind, index in self._expected_keys()
-        }
         for device in dr.async_child_entries_for_config_entry(
             dev_reg, self._shared.entry.entry_id
         ):
-            if device.identifiers.isdisjoint(expected):
+            if not self.in_use(device):
                 dev_reg.async_remove_device(device.id)
+
+    def in_use(self, device: dr.AnyDeviceEntry) -> bool:
+        active = {(DOMAIN, self._shared.mac_addr)} | {
+            self._identifier(kind, index) for kind, index in self._expected_keys()
+        }
+        return not device.identifiers.isdisjoint(active)
 
     def _identifier(self, kind: ChildDeviceKind, index: int) -> tuple[str, str]:
         return (DOMAIN, f"{self._shared.mac_addr}-{kind}-{index}")

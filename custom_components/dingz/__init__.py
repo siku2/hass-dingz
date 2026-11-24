@@ -1,5 +1,7 @@
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 from yarl import URL
 
@@ -35,6 +37,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> boo
     )
 
     return True
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: DingzConfigEntry, device: dr.AnyDeviceEntry
+) -> bool:
+    if entry.state is not ConfigEntryState.LOADED:
+        return True
+    return not entry.runtime_data.child_devices.in_use(device)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:
