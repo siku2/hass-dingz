@@ -5,6 +5,7 @@ from typing import Any
 from homeassistant.components.cover import (
     ATTR_POSITION,
     ATTR_TILT_POSITION,
+    CoverDeviceClass,
     CoverEntity,
     CoverEntityFeature,
 )
@@ -78,6 +79,12 @@ class Blind(
 
         self._attr_unique_id = f"f{shared.mac_addr}-{index}"
         self._attr_device_info = shared.child_devices.device_info("blind", index)
+        try:
+            blind_type = shared.config.data.blinds[index].get("type")
+        except LookupError:
+            blind_type = None
+        if blind_type == "blind":
+            self._attr_device_class = CoverDeviceClass.BLIND
 
     @property
     def current_cover_position(self) -> int | None:
