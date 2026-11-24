@@ -10,7 +10,13 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfInformation
+from homeassistant.const import (
+    LIGHT_LUX,
+    EntityCategory,
+    UnitOfInformation,
+    UnitOfPower,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -129,7 +135,7 @@ async def async_setup_entry(
                 SensorEntityDescription(
                     key=f"sensors.{name}",
                     device_class=SensorDeviceClass.TEMPERATURE,
-                    native_unit_of_measurement="°C",
+                    native_unit_of_measurement=UnitOfTemperature.CELSIUS,
                     state_class=SensorStateClass.MEASUREMENT,
                     entity_category=EntityCategory.DIAGNOSTIC if is_diag else None,
                     translation_key=name,
@@ -154,7 +160,7 @@ def _dt_with_hass_tz(s: str) -> datetime | None:
 
 class OutputPower(DingzOutputEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
-    _attr_native_unit_of_measurement = "W"
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_translation_key = "output_power"
 
@@ -210,7 +216,7 @@ class JsonPathSensor(
 class Brightness(CoordinatedNotificationStateEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.ILLUMINANCE
     _attr_has_entity_name = True
-    _attr_native_unit_of_measurement = "lx"
+    _attr_native_unit_of_measurement = LIGHT_LUX
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_translation_key = "brightness"
 

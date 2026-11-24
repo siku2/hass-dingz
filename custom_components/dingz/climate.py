@@ -9,7 +9,7 @@ from homeassistant.components.climate.const import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import ATTR_TEMPERATURE
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -55,7 +55,7 @@ class Climate(
         self._attr_device_info = coordinator.shared.device_info
         self._attr_name = None  # since there's only one thermostat, use the device name
 
-        self._attr_native_temperature_unit = "°C"
+        self._attr_native_temperature_unit = UnitOfTemperature.CELSIUS
         self._attr_target_temperature_step = 1.0  # from web frontend
         self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
 

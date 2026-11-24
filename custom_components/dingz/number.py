@@ -1,5 +1,5 @@
 from homeassistant.components.number import NumberDeviceClass, NumberEntity
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -35,7 +35,7 @@ class TemperatureOffset(CoordinatorEntity[ConfigCoordinator], NumberEntity):
         self._attr_translation_key = "temperature_offset"
 
         self._attr_device_class = NumberDeviceClass.TEMPERATURE
-        self._attr_native_unit_of_measurement = "°C"
+        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         # these values were taken from the dingz frontend
         self._attr_native_step = 0.5
         self._attr_native_min_value = -30
