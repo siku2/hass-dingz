@@ -123,6 +123,10 @@ class CoordinatedNotificationStateEntity(
     @abc.abstractmethod
     def handle_state_update(self) -> None: ...
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self.handle_state_update()
+
     @callback
     def _handle_coordinator_update(self) -> None:
         self.handle_state_update()
