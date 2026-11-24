@@ -474,14 +474,14 @@ class _ReqThrottleLock(asyncio.Lock):
     async def acquire(self) -> Literal[True]:
         res = await super().acquire()
         if self._last_release_at:
-            passed = time.time() - self._last_release_at
+            passed = time.monotonic() - self._last_release_at
             remaining = self.throttle_duration - passed
             if remaining > 0:
                 await asyncio.sleep(remaining)
         return res
 
     def release(self) -> None:
-        self._last_release_at = time.time()
+        self._last_release_at = time.monotonic()
         return super().release()
 
 
