@@ -64,7 +64,7 @@ class Climate(
         try:
             return self.coordinator.data["thermostat"]["temp"]
         except LookupError:
-            return False
+            return None
 
     @property
     def native_target_temperature(self) -> float | None:
@@ -120,7 +120,7 @@ class Climate(
     async def async_set_temperature(self, **kwargs: Any) -> None:
         config = api.ThermostatConfig()
 
-        if value := kwargs.get(ATTR_TEMPERATURE):
+        if (value := kwargs.get(ATTR_TEMPERATURE)) is not None:
             config["target_temp"] = value
 
         if not config:
