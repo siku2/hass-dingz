@@ -132,8 +132,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             error=_ERROR_DEVICE_ALREADY_CONFIGURED,
         )
 
-        self._info = await validate_input(self.hass, {"host": ip})
-        return await self.async_step_confirm()
+        return await self._async_confirm_discovered(ip)
 
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
@@ -153,7 +152,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             error=_ERROR_DEVICE_ALREADY_CONFIGURED,
         )
 
-        self._info = await validate_input(self.hass, {"host": discovery_info.host})
+        return await self._async_confirm_discovered(discovery_info.host)
+
+    async def _async_confirm_discovered(
+        self, host: str
+    ) -> config_entries.ConfigFlowResult:
+        try:
+            self._info = await validate_input(self.hass, {"host": host})
+        except CannotConnect:
+            return self.async_abort(reason="cannot_connect")
         return await self.async_step_confirm()
 
 

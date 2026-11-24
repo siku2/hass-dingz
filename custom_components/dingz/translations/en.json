@@ -1,7 +1,10 @@
 {
     "config": {
+        "flow_title": "{name}",
         "abort": {
-            "device_already_configured": "Device is already configured"
+            "device_already_configured": "Device is already configured",
+            "false_positive": "The discovered device is not a dingz",
+            "cannot_connect": "Failed to connect"
         },
         "error": {
             "cannot_connect": "Failed to connect",
