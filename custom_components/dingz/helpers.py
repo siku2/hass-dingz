@@ -33,38 +33,6 @@ def json_path_lookup(value: Any, path: list[str | int]) -> Any | None:
     return value
 
 
-class UserAssignedNameMixin(Entity, abc.ABC):
-    _attr_has_entity_name = True
-
-    @property
-    @abc.abstractmethod
-    def comp_index(self) -> int: ...
-
-    @property
-    @abc.abstractmethod
-    def user_given_name(self) -> str | None: ...
-
-    @property
-    def name(self) -> str | None:
-        name = self.user_given_name or ""
-
-        if name:
-            # we don't want to override translation_key to keep state translations in tact
-            tr_key = f"component.{self.platform.platform_name}.entity.{self.platform.domain}.{self.translation_key}_named.name"
-        else:
-            # same as _name_translation_key
-            tr_key = f"component.{self.platform.platform_name}.entity.{self.platform.domain}.{self.translation_key}.name"
-
-        tr_fmt: str | None = self.platform_data.platform_translations.get(tr_key)
-        if name and not tr_fmt:
-            # we have a name, but no override for the template, in that case we just use the name given by the user
-            tr_fmt = "{name}"
-
-        if tr_fmt is None:
-            return None
-        return tr_fmt.format(name=name, position=self.comp_index + 1)
-
-
 class InternalNotificationMixin(Entity, abc.ABC):
     _attr_should_poll = False
 

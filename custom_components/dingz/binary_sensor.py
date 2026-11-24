@@ -12,7 +12,6 @@ from . import api
 from .helpers import (
     CoordinatedNotificationStateEntity,
     InternalNotificationMixin,
-    UserAssignedNameMixin,
 )
 from .shared import (
     DingzConfigEntry,
@@ -51,8 +50,8 @@ async def async_setup_entry(
 class Input(
     CoordinatedNotificationStateEntity,
     BinarySensorEntity,
-    UserAssignedNameMixin,
 ):
+    _attr_has_entity_name = True
     _attr_translation_key = "input"
 
     def __init__(self, shared: Shared, *, index: int) -> None:
@@ -61,6 +60,10 @@ class Input(
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-input-{index}"
         self._attr_device_info = self.coordinator.shared.device_info
+        if name := self.dingz_input_config.get("name"):
+            self._attr_name = name
+        else:
+            self._attr_translation_placeholders = {"position": str(index + 1)}
 
     @property
     def dingz_input_config(self) -> api.InputConfig:
@@ -68,14 +71,6 @@ class Input(
             return self.coordinator.shared.config.data.inputs[self.__index]
         except LookupError:
             return api.InputConfig()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_input_config.get("name")
 
     @property
     def device_class(self) -> BinarySensorDeviceClass | None:

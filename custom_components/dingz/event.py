@@ -3,7 +3,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import api
-from .helpers import InternalNotificationMixin, UserAssignedNameMixin
+from .helpers import InternalNotificationMixin
 from .shared import (
     ButtonNotification,
     DingzConfigEntry,
@@ -71,7 +71,8 @@ class Pir(InternalNotificationMixin, EventEntity):
         self.async_write_ha_state()
 
 
-class Button(InternalNotificationMixin, EventEntity, UserAssignedNameMixin):
+class Button(InternalNotificationMixin, EventEntity):
+    _attr_has_entity_name = True
     _attr_translation_key = "button"
     _attr_device_class = EventDeviceClass.BUTTON
     _attr_event_types = [
@@ -91,6 +92,10 @@ class Button(InternalNotificationMixin, EventEntity, UserAssignedNameMixin):
 
         self._attr_unique_id = f"{shared.mac_addr}-button-{index}"
         self._attr_device_info = shared.device_info
+        if name := self.dingz_button_config.get("name"):
+            self._attr_name = name
+        else:
+            self._attr_translation_placeholders = {"position": str(index + 1)}
 
     @property
     def dingz_button_config(self) -> api.ButtonConfig:
@@ -98,14 +103,6 @@ class Button(InternalNotificationMixin, EventEntity, UserAssignedNameMixin):
             return self.shared.config.data.buttons["buttons"][self.__index]
         except LookupError:
             return api.ButtonConfig()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_button_config.get("name")
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
