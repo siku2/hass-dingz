@@ -17,7 +17,6 @@ from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     DelayedCoordinatorRefreshMixin,
-    UserAssignedNameMixin,
 )
 from .shared import InternalNotification, MotorMotion, MotorStateNotification, Shared
 
@@ -52,10 +51,10 @@ async def async_setup_entry(
 class Blind(
     CoordinatedNotificationStateEntity,
     CoverEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
-    _attr_translation_key = "blind"
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
@@ -74,22 +73,7 @@ class Blind(
         self.__pending_flush: asyncio.Future[None] | None = None
 
         self._attr_unique_id = f"f{shared.mac_addr}-{index}"
-        self._attr_device_info = shared.device_info
-
-    @property
-    def dingz_blind_config(self) -> api.BlindConfig:
-        try:
-            return self.coordinator.shared.config.data.blinds[self.__index]
-        except LookupError:
-            return api.BlindConfig()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_blind_config.get("name")
+        self._attr_device_info = shared.child_devices.device_info("blind", index)
 
     @property
     def current_cover_position(self) -> int | None:

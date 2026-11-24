@@ -23,13 +23,18 @@ PLATFORMS: list[Platform] = [
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    shared = Shared(hass, URL(entry.data[CONF_BASE_URL]))
+    shared = Shared(hass, entry, URL(entry.data[CONF_BASE_URL]))
     await shared.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = shared
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    shared.child_devices.async_remove_stale()
+    entry.async_on_unload(
+        shared.config.async_add_listener(shared.child_devices.async_update_names)
+    )
 
     return True
 

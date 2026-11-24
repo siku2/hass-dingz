@@ -21,7 +21,6 @@ from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     DelayedCoordinatorRefreshMixin,
-    UserAssignedNameMixin,
 )
 from .shared import (
     InternalNotification,
@@ -142,9 +141,10 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
 class Dimmer(
     CoordinatedNotificationStateEntity,
     LightEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = LightEntityFeature.TRANSITION
 
     def __init__(self, shared: Shared, index: int) -> None:
@@ -152,8 +152,7 @@ class Dimmer(
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-dimmer-{index}"
-        self._attr_device_info = shared.device_info
-        self._attr_translation_key = "dimmer"
+        self._attr_device_info = shared.child_devices.device_info("output", index)
 
     @property
     def dingz_output_config(self) -> api.OutputConfig:
@@ -175,14 +174,6 @@ class Dimmer(
             return self.coordinator.data["dimmers"][self.__index]
         except LookupError:
             return api.StateDimmer()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_output_config.get("name")
 
     @property
     def color_mode(self) -> ColorMode | str | None:
@@ -237,9 +228,10 @@ class Dimmer(
 class Ddi(
     CoordinatedNotificationStateEntity,
     LightEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = LightEntityFeature.TRANSITION
 
     def __init__(self, shared: Shared, index: int) -> None:
@@ -247,8 +239,7 @@ class Ddi(
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-ddi-{index}"
-        self._attr_device_info = shared.device_info
-        self._attr_translation_key = "ddi"
+        self._attr_device_info = shared.child_devices.device_info("ddi", index)
 
         self._attr_min_color_temp_kelvin = 2700
         # TODO: why does the api return 404 for values > 6500?
@@ -267,14 +258,6 @@ class Ddi(
             return self.coordinator.data["ddi_channels"][self.__index]
         except LookupError:
             return api.StateDdiChannel()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_ddi_channel_config.get("name")
 
     @property
     def dingz_ct_enabled(self) -> bool:

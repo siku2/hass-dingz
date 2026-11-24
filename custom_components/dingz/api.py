@@ -612,7 +612,7 @@ class Client:
         )
         try:
             return data["ddi_channels"]
-        except (TypeError, KeyError):
+        except TypeError, KeyError:
             # Either data is None, or it doesn't have the expected structure
             return []
 

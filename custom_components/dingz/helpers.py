@@ -89,12 +89,16 @@ class DelayedCoordinatorRefreshMixin:
         await coordinator.async_request_refresh()
 
 
-class DingzOutputEntity(CoordinatorEntity[StateCoordinator], UserAssignedNameMixin):
+class DingzOutputEntity(CoordinatorEntity[StateCoordinator]):
+    _attr_has_entity_name = True
+
     def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
         super().__init__(coordinator)
         self.__index = index
 
-        self._attr_device_info = self.coordinator.shared.device_info
+        self._attr_device_info = coordinator.shared.child_devices.device_info(
+            "output", index
+        )
 
     @property
     def comp_index(self) -> int:
@@ -106,17 +110,6 @@ class DingzOutputEntity(CoordinatorEntity[StateCoordinator], UserAssignedNameMix
             return self.coordinator.data["dimmers"][self.__index]
         except LookupError:
             return api.StateDimmer()
-
-    @property
-    def dingz_output_config(self) -> api.OutputConfig:
-        try:
-            return self.coordinator.shared.config.data.outputs[self.__index]
-        except LookupError:
-            return api.OutputConfig()
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_output_config.get("name")
 
 
 class CoordinatedNotificationStateEntity(
