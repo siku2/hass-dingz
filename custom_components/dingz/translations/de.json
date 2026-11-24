@@ -149,12 +149,6 @@
             "output_power": {
                 "name": "Leistung"
             },
-            "output_energy": {
-                "name": "Ausgang {position} Energie"
-            },
-            "output_energy_named": {
-                "name": "{name} Energie"
-            },
             "state_time": {
                 "name": "Zustandszeit"
             },

@@ -80,13 +80,7 @@ class DingzOutputEntity(CoordinatorEntity[StateCoordinator]):
             return api.StateDimmer()
 
 
-class CoordinatedNotificationStateEntity(
-    CoordinatorEntity[StateCoordinator], InternalNotificationMixin, abc.ABC
-):
-    def __init__(self, shared: Shared) -> None:
-        InternalNotificationMixin.__init__(self, shared)
-        super().__init__(shared.state)
-
+class CoordinatedStateEntity(CoordinatorEntity[StateCoordinator], abc.ABC):
     @callback
     @abc.abstractmethod
     def handle_state_update(self) -> None: ...
@@ -99,3 +93,11 @@ class CoordinatedNotificationStateEntity(
     def _handle_coordinator_update(self) -> None:
         self.handle_state_update()
         super()._handle_coordinator_update()
+
+
+class CoordinatedNotificationStateEntity(
+    CoordinatedStateEntity, InternalNotificationMixin, abc.ABC
+):
+    def __init__(self, shared: Shared) -> None:
+        InternalNotificationMixin.__init__(self, shared)
+        super().__init__(shared.state)

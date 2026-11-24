@@ -7,7 +7,6 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import api
 from .shared import DingzConfigEntry, Shared
 
 
@@ -60,7 +59,6 @@ class Action(ButtonEntity):
         desc: ButtonEntityDescription,
         *,
         refresh_state: bool = False,
-        refresh_config: bool = False,
     ) -> None:
         self.shared = shared
 
@@ -70,7 +68,6 @@ class Action(ButtonEntity):
         self.entity_description = desc
 
         self.__refresh_state = refresh_state
-        self.__refresh_config = refresh_config
 
     async def async_press(self) -> None:
         method = getattr(self.shared.client, self.entity_description.key)
@@ -79,8 +76,6 @@ class Action(ButtonEntity):
 
         if self.__refresh_state:
             await self.shared.state.async_request_refresh()
-        if self.__refresh_config:
-            await self.shared.config.async_request_refresh()
 
 
 class ResetPirTime(ButtonEntity):
@@ -94,16 +89,6 @@ class ResetPirTime(ButtonEntity):
         self._attr_unique_id = f"{shared.mac_addr}-reset-pir-{index}"
         self._attr_device_info = shared.device_info
         self._attr_translation_key = f"reset_pir_time_{index}"
-
-    @property
-    def dingz_pir(self) -> api.SensorPir:
-        try:
-            raw = self.shared.state.data["sensors"]["pirs"][self.__index]
-        except LookupError:
-            return api.SensorPir()
-        if raw is None:
-            return api.SensorPir()
-        return raw
 
     async def async_press(self) -> None:
         await self.shared.client.reset_pir_time(self.__index)

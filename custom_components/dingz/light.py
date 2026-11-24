@@ -18,6 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import api
 from .helpers import (
     CoordinatedNotificationStateEntity,
+    CoordinatedStateEntity,
     DelayedCoordinatorRefreshMixin,
 )
 from .shared import (
@@ -225,7 +226,7 @@ class Dimmer(
 
 
 class Ddi(
-    CoordinatedNotificationStateEntity,
+    CoordinatedStateEntity,
     LightEntity,
     DelayedCoordinatorRefreshMixin,
 ):
@@ -234,7 +235,7 @@ class Ddi(
     _attr_supported_features = LightEntityFeature.TRANSITION
 
     def __init__(self, shared: Shared, index: int) -> None:
-        super().__init__(shared)
+        super().__init__(shared.state)
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-ddi-{index}"
@@ -277,24 +278,6 @@ class Ddi(
         )
 
     @callback
-    def handle_notification(self, notification: InternalNotification) -> None:
-        # TODO: implement
-        return
-        # if not (
-        #     isinstance(notification, LightStateNotification)
-        #     and notification.index == self.__index
-        # ):
-        #     return
-        # match notification.turn:
-        #     case "on":
-        #         self._attr_is_on = True
-        #     case "off":
-        #         self._attr_is_on = False
-
-        # self._attr_brightness = 255 * notification.brightness // 100
-        # self.async_write_ha_state()
-
-    @callback
     def handle_state_update(self) -> None:
         channel_state = self.dingz_ddi_channel_state
         self._attr_is_on = channel_state.get("on")
@@ -305,7 +288,6 @@ class Ddi(
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         color_temperature = kwargs.get(ATTR_COLOR_TEMP_KELVIN)
-        brightness = kwargs.get(ATTR_BRIGHTNESS)
 
         try:
             brightness = kwargs[ATTR_BRIGHTNESS]
