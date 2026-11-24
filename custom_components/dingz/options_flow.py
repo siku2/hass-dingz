@@ -70,7 +70,6 @@ class DingzOptionsFlow(OptionsFlow):
             if not errors:
                 try:
                     await shared.client.update_mqtt_service_config(config)
-                    await shared.client.save_default_config()
                 except aiohttp.ClientError, TimeoutError, api.NotEnoughRamError:
                     _LOGGER.exception("failed to update the MQTT configuration")
                     errors["base"] = "cannot_connect"
