@@ -9,16 +9,17 @@ from enum import IntEnum
 from typing import Any, Literal, cast
 
 from homeassistant.components import mqtt
-from homeassistant.components.mqtt.subscription import (
-    async_prepare_subscribe_topics,
-    async_subscribe_topics,
-    async_unsubscribe_topics,
+from homeassistant.config_entries import (
+    SIGNAL_CONFIG_ENTRY_CHANGED,
+    ConfigEntry,
+    ConfigEntryChange,
+    ConfigEntryState,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from yarl import URL
 
@@ -54,7 +55,7 @@ class Shared:
         self._device_info = DeviceInfo()
         self._mac_addr: str | None = None
         self._notifier = _Notifier()
-        self._sub_state = None
+        self._mqtt_unsubscribe: list[Callable[[], None]] = []
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -95,48 +96,44 @@ class Shared:
         )
         self.child_devices.register_parent()
 
-        if mqtt.mqtt_config_entry_enabled(self.hass):
-            _LOGGER.info("enabling mqtt integration")
-            dingz_id = self.config.data.system.get("id", "")
-            self._sub_state = async_prepare_subscribe_topics(
-                self.hass,
-                self._sub_state,
-                {
-                    "online": {
-                        "topic": f"dingz/{dingz_id}/online",
-                        "msg_callback": self._handle_mqtt_online,
-                    },
-                    "pir": {
-                        "topic": f"dingz/{dingz_id}/+/event/pir/+",
-                        "msg_callback": self._handle_mqtt_pir,
-                    },
-                    "button": {
-                        "topic": f"dingz/{dingz_id}/+/event/button/+",
-                        "msg_callback": self._handle_mqtt_button,
-                    },
-                    "motor": {
-                        "topic": f"dingz/{dingz_id}/+/state/motor/+",
-                        "msg_callback": self._handle_mqtt_motor,
-                    },
-                    "input": {
-                        "topic": f"dingz/{dingz_id}/+/state/input/+",
-                        "msg_callback": self._handle_mqtt_input,
-                    },
-                    "sensor": {
-                        "topic": f"dingz/{dingz_id}/+/sensor/+",
-                        "msg_callback": self._handle_mqtt_sensor,
-                    },
-                    "light": {
-                        "topic": f"dingz/{dingz_id}/+/state/light/+",
-                        "msg_callback": self._handle_mqtt_light,
-                    },
-                },
+        self.entry.async_on_unload(
+            async_dispatcher_connect(
+                self.hass, SIGNAL_CONFIG_ENTRY_CHANGED, self._async_entry_changed
             )
-            await async_subscribe_topics(self.hass, self._sub_state)
+        )
+        if self.hass.config_entries.async_loaded_entries(mqtt.DOMAIN):
+            await self._async_subscribe_mqtt()
 
     @callback
     def async_unload(self) -> None:
-        self._sub_state = async_unsubscribe_topics(self.hass, self._sub_state)
+        while self._mqtt_unsubscribe:
+            self._mqtt_unsubscribe.pop()()
+
+    @callback
+    def _async_entry_changed(
+        self, change: ConfigEntryChange, entry: ConfigEntry
+    ) -> None:
+        if entry.domain == mqtt.DOMAIN and entry.state is ConfigEntryState.LOADED:
+            self.entry.async_create_task(self.hass, self._async_subscribe_mqtt())
+
+    async def _async_subscribe_mqtt(self) -> None:
+        if self._mqtt_unsubscribe:
+            return
+        _LOGGER.debug("subscribing to MQTT topics")
+        prefix = f"dingz/{self.config.data.system.get('id', '')}"
+        topics = {
+            f"{prefix}/online": self._handle_mqtt_online,
+            f"{prefix}/+/event/pir/+": self._handle_mqtt_pir,
+            f"{prefix}/+/event/button/+": self._handle_mqtt_button,
+            f"{prefix}/+/state/motor/+": self._handle_mqtt_motor,
+            f"{prefix}/+/state/input/+": self._handle_mqtt_input,
+            f"{prefix}/+/sensor/+": self._handle_mqtt_sensor,
+            f"{prefix}/+/state/light/+": self._handle_mqtt_light,
+        }
+        for topic, msg_callback in topics.items():
+            self._mqtt_unsubscribe.append(
+                await mqtt.async_subscribe(self.hass, topic, msg_callback)
+            )
 
     def add_listener(self, listener: _NotificationCallbackT) -> Callable[[], None]:
         return self._notifier.add_listener(listener)
