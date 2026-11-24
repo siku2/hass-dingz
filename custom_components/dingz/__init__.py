@@ -29,15 +29,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = shared
 
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    shared.child_devices.async_remove_stale()
+    entry.async_on_unload(
+        shared.config.async_add_listener(shared.child_devices.async_update_names)
+    )
+
     return True
-
-
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

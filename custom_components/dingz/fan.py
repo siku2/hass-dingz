@@ -34,7 +34,7 @@ class Fan(
     FanEntity,
     DelayedCoordinatorRefreshMixin,
 ):
-    _attr_translation_key = "fan"
+    _attr_name = None
 
     def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
         super().__init__(coordinator, index=index)

@@ -18,13 +18,24 @@
             }
         }
     },
-    "options": {
-        "step": {
-            "init": {
-                "data": {
-                    "child_devices": "Kind-Geräte (Child Devices) für Ausgänge, Jalousien und DDI-Kanäle anlegen"
-                }
-            }
+    "device": {
+        "output": {
+            "name": "Ausgang {position}"
+        },
+        "output_light": {
+            "name": "Licht {position}"
+        },
+        "output_fan": {
+            "name": "Ventilator {position}"
+        },
+        "output_power_socket": {
+            "name": "Steckdose {position}"
+        },
+        "blind": {
+            "name": "Jalousie {position}"
+        },
+        "ddi": {
+            "name": "DDI Kanal {position}"
         }
     },
     "entity": {
@@ -54,11 +65,6 @@
             },
             "reset_pir_time_1": {
                 "name": "Interne PIR-Zeit zurücksetzen"
-            }
-        },
-        "cover": {
-            "blind": {
-                "name": "Jalousie {position}"
             }
         },
         "event": {
@@ -92,20 +98,9 @@
                 }
             }
         },
-        "fan": {
-            "fan": {
-                "name": "Ventilator {position}"
-            }
-        },
         "light": {
             "front": {
                 "name": "Front LED"
-            },
-            "dimmer": {
-                "name": "Licht {position}"
-            },
-            "ddi": {
-                "name": "DDI Kanal {position}"
             }
         },
         "number": {
@@ -149,10 +144,7 @@
                 }
             },
             "output_power": {
-                "name": "Ausgangsleistung {position}"
-            },
-            "output_power_named": {
-                "name": "{name} Leistung"
+                "name": "Leistung"
             },
             "output_energy": {
                 "name": "Ausgang {position} Energie"
@@ -176,9 +168,6 @@
         "switch": {
             "mqtt_enable": {
                 "name": "MQTT Aktiviert"
-            },
-            "power_socket": {
-                "name": "Steckdose {position}"
             }
         },
         "text": {

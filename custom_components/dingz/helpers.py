@@ -23,6 +23,7 @@ def compile_json_path(raw: str) -> list[str | int]:
 
 def json_path_lookup(value: Any, path: list[str | int]) -> Any | None:
     if value is None:
+        # The initial value could be 'None' because the state hasn't been fetched yet.
         return None
     try:
         for key in path:
@@ -34,7 +35,6 @@ def json_path_lookup(value: Any, path: list[str | int]) -> Any | None:
 
 class UserAssignedNameMixin(Entity, abc.ABC):
     _attr_has_entity_name = True
-    _is_child_device_entity: bool = False
 
     @property
     @abc.abstractmethod
@@ -48,16 +48,16 @@ class UserAssignedNameMixin(Entity, abc.ABC):
     def name(self) -> str | None:
         name = self.user_given_name or ""
 
-        if self._is_child_device_entity and name:
-            return None
-
         if name:
+            # we don't want to override translation_key to keep state translations in tact
             tr_key = f"component.{self.platform.platform_name}.entity.{self.platform.domain}.{self.translation_key}_named.name"
         else:
+            # same as _name_translation_key
             tr_key = f"component.{self.platform.platform_name}.entity.{self.platform.domain}.{self.translation_key}.name"
 
         tr_fmt: str | None = self.platform_data.platform_translations.get(tr_key)
         if name and not tr_fmt:
+            # we have a name, but no override for the template, in that case we just use the name given by the user
             tr_fmt = "{name}"
 
         if tr_fmt is None:
@@ -83,20 +83,21 @@ class InternalNotificationMixin(Entity, abc.ABC):
 
 class DelayedCoordinatorRefreshMixin:
     async def delayed_request_refresh(self) -> None:
+        # HACK: dingz takes some time to realize and update its internal state
         await asyncio.sleep(1.0)
         coordinator = cast(DataUpdateCoordinator[Any], self.coordinator)  # type: ignore
         await coordinator.async_request_refresh()
 
 
-class DingzOutputEntity(CoordinatorEntity[StateCoordinator], UserAssignedNameMixin):
+class DingzOutputEntity(CoordinatorEntity[StateCoordinator]):
+    _attr_has_entity_name = True
+
     def __init__(self, coordinator: StateCoordinator, *, index: int) -> None:
         super().__init__(coordinator)
         self.__index = index
 
-        self._is_child_device_entity = coordinator.shared.use_child_devices
-        self._attr_device_info = coordinator.shared.child_device_info(
-            f"output_{index}",
-            name=self.dingz_output_config.get("name"),
+        self._attr_device_info = coordinator.shared.child_devices.device_info(
+            "output", index
         )
 
     @property
@@ -109,17 +110,6 @@ class DingzOutputEntity(CoordinatorEntity[StateCoordinator], UserAssignedNameMix
             return self.coordinator.data["dimmers"][self.__index]
         except LookupError:
             return api.StateDimmer()
-
-    @property
-    def dingz_output_config(self) -> api.OutputConfig:
-        try:
-            return self.coordinator.shared.config.data.outputs[self.__index]
-        except LookupError:
-            return api.OutputConfig()
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_output_config.get("name")
 
 
 class CoordinatedNotificationStateEntity(

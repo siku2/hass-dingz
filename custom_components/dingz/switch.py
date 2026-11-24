@@ -15,7 +15,6 @@ from . import api
 from .const import DOMAIN
 from .helpers import (
     DelayedCoordinatorRefreshMixin,
-    UserAssignedNameMixin,
     compile_json_path,
     json_path_lookup,
 )
@@ -87,9 +86,11 @@ class MqttJsonPath(CoordinatorEntity[ConfigCoordinator], SwitchEntity):
 class PowerSocket(
     CoordinatorEntity[StateCoordinator],
     SwitchEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
+    _attr_has_entity_name = True
+    _attr_name = None
+
     def __init__(self, shared: Shared, index: int) -> None:
         super().__init__(shared.state)
         self.__index = index
@@ -97,19 +98,7 @@ class PowerSocket(
         self._attr_unique_id = (
             f"{self.coordinator.shared.mac_addr}-power_socket-{index}"
         )
-        self._is_child_device_entity = shared.use_child_devices
-        self._attr_device_info = shared.child_device_info(
-            f"output_{index}",
-            name=self.dingz_output_config.get("name"),
-        )
-        self._attr_translation_key = "power_socket"
-
-    @property
-    def dingz_output_config(self) -> api.OutputConfig:
-        try:
-            return self.coordinator.shared.config.data.outputs[self.__index]
-        except LookupError:
-            return api.OutputConfig()
+        self._attr_device_info = shared.child_devices.device_info("output", index)
 
     @property
     def dingz_dimmer_state(self) -> api.StateDimmer:
@@ -117,14 +106,6 @@ class PowerSocket(
             return self.coordinator.data["dimmers"][self.__index]
         except LookupError:
             return api.StateDimmer()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_output_config.get("name")
 
     @property
     def is_on(self) -> bool | None:

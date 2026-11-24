@@ -5,7 +5,7 @@ import logging
 from collections.abc import Callable
 from datetime import timedelta
 from enum import IntEnum
-from typing import Any, Literal, Union, cast
+from typing import Any, Literal, cast
 
 from homeassistant.components import mqtt
 from homeassistant.components.mqtt.subscription import (
@@ -17,12 +17,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.device_registry import ChildDeviceInfo, DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from yarl import URL
 
 from . import api
-from .const import CONF_CHILD_DEVICES, DOMAIN
+from .child_devices import ChildDevices
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,8 +33,8 @@ class Shared:
     entry: ConfigEntry
     client: api.Client
 
-    state: "StateCoordinator"
-    config: "ConfigCoordinator"
+    state: StateCoordinator
+    config: ConfigCoordinator
 
     def __init__(
         self,
@@ -47,9 +48,9 @@ class Shared:
         self.state = StateCoordinator(self)
         self.diag = DiagnosticCoordinator(self)
         self.config = ConfigCoordinator(self)
+        self.child_devices = ChildDevices(self)
 
         self._device_info = DeviceInfo()
-        self._parent_device_id: str | None = None
         self._mac_addr: str | None = None
         self._notifier = _Notifier()
         self._sub_state = None
@@ -62,26 +63,6 @@ class Shared:
     def mac_addr(self) -> str:
         assert self._mac_addr is not None
         return self._mac_addr
-
-    @property
-    def use_child_devices(self) -> bool:
-        return bool(self.entry.options.get(CONF_CHILD_DEVICES, False))
-
-    def child_device_info(
-        self,
-        key: str,
-        *,
-        name: str | None = None,
-    ) -> DeviceInfo | ChildDeviceInfo:
-        if not self.use_child_devices or not self._parent_device_id:
-            return self.device_info
-
-        child_name = name.strip() if name and name.strip() else key
-        return ChildDeviceInfo(
-            identifiers={(DOMAIN, f"{self.mac_addr}:{key}")},
-            parent_device_id=self._parent_device_id,
-            name=child_name,
-        )
 
     async def async_config_entry_first_refresh(self) -> None:
         await self.state.async_config_entry_first_refresh()
@@ -104,13 +85,7 @@ class Shared:
             sw_version=self.config.data.device.get("fw_version"),
             hw_version=self.config.data.device.get("hw_version"),
         )
-
-        device_registry = dr.async_get(self.hass)
-        parent_entry = device_registry.async_get_or_create_from_info(
-            config_entry_id=self.entry.entry_id,
-            device_info=self._device_info,
-        )
-        self._parent_device_id = parent_entry.id
+        self.child_devices.register_parent()
 
         if mqtt.mqtt_config_entry_enabled(self.hass):
             _LOGGER.info("enabling mqtt integration")
@@ -154,7 +129,7 @@ class Shared:
     async def unload(self) -> None:
         self._sub_state = async_unsubscribe_topics(self.hass, self._sub_state)
 
-    def add_listener(self, callback: "_NotificationCallbackT") -> Callable[[], None]:
+    def add_listener(self, callback: _NotificationCallbackT) -> Callable[[], None]:
         return self._notifier.add_listener(callback)
 
     async def _handle_mqtt_online(self, msg: mqtt.ReceiveMessage) -> None:
@@ -181,7 +156,7 @@ class Shared:
             payload: dict[str, Any] | Any = json.loads(msg.payload)
             if not isinstance(payload, dict):
                 raise TypeError()
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             _LOGGER.error(
                 "ignoring broken motor notification (topic = %s): %s",
                 msg.topic,
@@ -230,7 +205,7 @@ class Shared:
             payload: dict[str, Any] | Any = json.loads(msg.payload)
             if not isinstance(payload, dict):
                 raise TypeError()
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             _LOGGER.error(
                 "ignoring broken light notification (topic = %s): %s",
                 msg.topic,
@@ -348,11 +323,13 @@ class MotorMotion(IntEnum):
     CALIBRATING = 3
 
     @classmethod
-    def parse(cls, value: Union[str, int, "MotorMotion"]) -> "MotorMotion":
+    def parse(cls, value: str | int | MotorMotion) -> MotorMotion:
         if isinstance(value, MotorMotion):
             return value
 
         if not isinstance(value, int):
+            # motion is supposed to be an int according to the documentation, but apparently it isn't.
+            # but to cover our bases we support both
             try:
                 value = int(value)
             except ValueError as exc:

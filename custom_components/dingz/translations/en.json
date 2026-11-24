@@ -18,13 +18,24 @@
             }
         }
     },
-    "options": {
-        "step": {
-            "init": {
-                "data": {
-                    "child_devices": "Create child devices for outputs, blinds, and DDI channels"
-                }
-            }
+    "device": {
+        "output": {
+            "name": "Output {position}"
+        },
+        "output_light": {
+            "name": "Light {position}"
+        },
+        "output_fan": {
+            "name": "Fan {position}"
+        },
+        "output_power_socket": {
+            "name": "Power Socket {position}"
+        },
+        "blind": {
+            "name": "Blind {position}"
+        },
+        "ddi": {
+            "name": "DDI Channel {position}"
         }
     },
     "entity": {
@@ -54,11 +65,6 @@
             },
             "reset_pir_time_1": {
                 "name": "Reset Internal PIR Time"
-            }
-        },
-        "cover": {
-            "blind": {
-                "name": "Blind {position}"
             }
         },
         "event": {
@@ -92,20 +98,9 @@
                 }
             }
         },
-        "fan": {
-            "fan": {
-                "name": "Fan {position}"
-            }
-        },
         "light": {
             "front": {
                 "name": "Front LED"
-            },
-            "dimmer": {
-                "name": "Light {position}"
-            },
-            "ddi": {
-                "name": "DDI Channel {position}"
             }
         },
         "number": {
@@ -149,10 +144,7 @@
                 }
             },
             "output_power": {
-                "name": "Output {position} Power"
-            },
-            "output_power_named": {
-                "name": "{name} Power"
+                "name": "Power"
             },
             "output_energy": {
                 "name": "Output {position} Energy"
@@ -176,9 +168,6 @@
         "switch": {
             "mqtt_enable": {
                 "name": "MQTT Enable"
-            },
-            "power_socket": {
-                "name": "Power Socket {position}"
             }
         },
         "text": {

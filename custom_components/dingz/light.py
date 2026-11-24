@@ -21,7 +21,6 @@ from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     DelayedCoordinatorRefreshMixin,
-    UserAssignedNameMixin,
 )
 from .shared import (
     InternalNotification,
@@ -114,6 +113,7 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
         except LookupError:
             hs = self.hs_color
             if hs is None:
+                # default to white
                 h, s = (0.0, 100.0)
             else:
                 h, s = hs
@@ -141,9 +141,10 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
 class Dimmer(
     CoordinatedNotificationStateEntity,
     LightEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = LightEntityFeature.TRANSITION
 
     def __init__(self, shared: Shared, index: int) -> None:
@@ -151,12 +152,7 @@ class Dimmer(
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-dimmer-{index}"
-        self._is_child_device_entity = shared.use_child_devices
-        self._attr_device_info = shared.child_device_info(
-            f"output_{index}",
-            name=self.dingz_output_config.get("name"),
-        )
-        self._attr_translation_key = "dimmer"
+        self._attr_device_info = shared.child_devices.device_info("output", index)
 
     @property
     def dingz_output_config(self) -> api.OutputConfig:
@@ -178,14 +174,6 @@ class Dimmer(
             return self.coordinator.data["dimmers"][self.__index]
         except LookupError:
             return api.StateDimmer()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_output_config.get("name")
 
     @property
     def color_mode(self) -> ColorMode | str | None:
@@ -240,9 +228,10 @@ class Dimmer(
 class Ddi(
     CoordinatedNotificationStateEntity,
     LightEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = LightEntityFeature.TRANSITION
 
     def __init__(self, shared: Shared, index: int) -> None:
@@ -250,12 +239,7 @@ class Ddi(
         self.__index = index
 
         self._attr_unique_id = f"{self.coordinator.shared.mac_addr}-ddi-{index}"
-        self._is_child_device_entity = shared.use_child_devices
-        self._attr_device_info = shared.child_device_info(
-            f"ddi_{index}",
-            name=self.dingz_ddi_channel_config.get("name"),
-        )
-        self._attr_translation_key = "ddi"
+        self._attr_device_info = shared.child_devices.device_info("ddi", index)
 
         self._attr_min_color_temp_kelvin = 2700
         # TODO: why does the api return 404 for values > 6500?
@@ -276,14 +260,6 @@ class Ddi(
             return api.StateDdiChannel()
 
     @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_ddi_channel_config.get("name")
-
-    @property
     def dingz_ct_enabled(self) -> bool:
         try:
             return self.dingz_ddi_channel_config["features"]["colour_temperature"]["en"]
@@ -292,6 +268,7 @@ class Ddi(
 
     @property
     def color_mode(self) -> ColorMode:
+        # DDI always supports brightness
         return ColorMode.COLOR_TEMP if self.dingz_ct_enabled else ColorMode.BRIGHTNESS
 
     @property
@@ -302,7 +279,21 @@ class Ddi(
 
     @callback
     def handle_notification(self, notification: InternalNotification) -> None:
+        # TODO: implement
         return
+        # if not (
+        #     isinstance(notification, LightStateNotification)
+        #     and notification.index == self.__index
+        # ):
+        #     return
+        # match notification.turn:
+        #     case "on":
+        #         self._attr_is_on = True
+        #     case "off":
+        #         self._attr_is_on = False
+
+        # self._attr_brightness = 255 * notification.brightness // 100
+        # self.async_write_ha_state()
 
     @callback
     def handle_state_update(self) -> None:
@@ -315,6 +306,7 @@ class Ddi(
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         color_temperature = kwargs.get(ATTR_COLOR_TEMP_KELVIN)
+        brightness = kwargs.get(ATTR_BRIGHTNESS)
 
         try:
             brightness = kwargs[ATTR_BRIGHTNESS]
@@ -326,6 +318,7 @@ class Ddi(
         if brightness is None and color_temperature is not None:
             # TODO: ct cannot be set without brightness
             brightness = self.dingz_ddi_channel_state.get("brightness")
+            # If it's still None, we'll let the device deal with it.
 
         await self.coordinator.shared.client.set_ddi_channel(
             self.__index,

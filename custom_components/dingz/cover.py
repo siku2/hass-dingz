@@ -17,12 +17,14 @@ from .const import DOMAIN
 from .helpers import (
     CoordinatedNotificationStateEntity,
     DelayedCoordinatorRefreshMixin,
-    UserAssignedNameMixin,
 )
 from .shared import InternalNotification, MotorMotion, MotorStateNotification, Shared
 
 _LOGGER = logging.getLogger(__name__)
 
+# Home Assistant services for position and tilt arrive as separate calls (HomeKit sends
+# them within a few milliseconds). The dingz API accepts both targets in a single request
+# (POST shade/<n>?blind=..&lamella=..), so requests arriving within this window are merged.
 _TARGET_COALESCE_WINDOW = 0.15
 
 
@@ -49,10 +51,10 @@ async def async_setup_entry(
 class Blind(
     CoordinatedNotificationStateEntity,
     CoverEntity,
-    UserAssignedNameMixin,
     DelayedCoordinatorRefreshMixin,
 ):
-    _attr_translation_key = "blind"
+    _attr_has_entity_name = True
+    _attr_name = None
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
@@ -71,26 +73,7 @@ class Blind(
         self.__pending_flush: asyncio.Future[None] | None = None
 
         self._attr_unique_id = f"f{shared.mac_addr}-{index}"
-        self._is_child_device_entity = shared.use_child_devices
-        self._attr_device_info = shared.child_device_info(
-            f"blind_{index}",
-            name=self.dingz_blind_config.get("name"),
-        )
-
-    @property
-    def dingz_blind_config(self) -> api.BlindConfig:
-        try:
-            return self.coordinator.shared.config.data.blinds[self.__index]
-        except LookupError:
-            return api.BlindConfig()
-
-    @property
-    def comp_index(self) -> int:
-        return self.__index
-
-    @property
-    def user_given_name(self) -> str | None:
-        return self.dingz_blind_config.get("name")
+        self._attr_device_info = shared.child_devices.device_info("blind", index)
 
     @property
     def current_cover_position(self) -> int | None:
@@ -159,6 +142,7 @@ class Blind(
     async def __queue_target(
         self, *, blind: int | None = None, lamella: int | None = None
     ) -> None:
+        """Collect position/tilt targets and send them to the dingz in one request."""
         if blind is not None:
             self.__pending_target["blind"] = blind
         if lamella is not None:
@@ -168,10 +152,12 @@ class Blind(
             self.__pending_flush = self.hass.async_create_task(
                 self.__flush_target(), name=f"dingz blind {self.__index} target"
             )
+        # shield: a cancelled caller must not cancel the request for the other callers
         await asyncio.shield(self.__pending_flush)
 
     async def __flush_target(self) -> None:
         await asyncio.sleep(_TARGET_COALESCE_WINDOW)
+        # take the batch before the request so calls arriving meanwhile start a new one
         target, self.__pending_target = self.__pending_target, {}
         self.__pending_flush = None
         await self.coordinator.shared.client.move_blind_position(self.__index, **target)
