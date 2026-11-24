@@ -113,7 +113,7 @@ class FrontLed(CoordinatorEntity[StateCoordinator], LightEntity):
             hs = self.hs_color
             if hs is None:
                 # default to white
-                h, s = (0.0, 100.0)
+                h, s = (0.0, 0.0)
             else:
                 h, s = hs
 
