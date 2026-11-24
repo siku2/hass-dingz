@@ -21,16 +21,6 @@ async def async_setup_entry(
         Action(
             shared,
             ButtonEntityDescription(
-                key="save_default_config",
-                entity_category=EntityCategory.CONFIG,
-                translation_key="save_default_config",
-            ),
-            # config timestamp is stored in state
-            refresh_state=True,
-        ),
-        Action(
-            shared,
-            ButtonEntityDescription(
                 key="reboot",
                 device_class=ButtonDeviceClass.RESTART,
                 entity_category=EntityCategory.DIAGNOSTIC,
@@ -53,13 +43,7 @@ async def async_setup_entry(
 class Action(ButtonEntity):
     shared: Shared
 
-    def __init__(
-        self,
-        shared: Shared,
-        desc: ButtonEntityDescription,
-        *,
-        refresh_state: bool = False,
-    ) -> None:
+    def __init__(self, shared: Shared, desc: ButtonEntityDescription) -> None:
         self.shared = shared
 
         self._attr_has_entity_name = True
@@ -67,15 +51,10 @@ class Action(ButtonEntity):
         self._attr_device_info = shared.device_info
         self.entity_description = desc
 
-        self.__refresh_state = refresh_state
-
     async def async_press(self) -> None:
         method = getattr(self.shared.client, self.entity_description.key)
         assert callable(method)
         await method()
-
-        if self.__refresh_state:
-            await self.shared.state.async_request_refresh()
 
 
 class ResetPirTime(ButtonEntity):

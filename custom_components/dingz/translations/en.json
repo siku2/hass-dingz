@@ -92,9 +92,6 @@
             }
         },
         "button": {
-            "save_default_config": {
-                "name": "Save Default Config"
-            },
             "reboot": {
                 "name": "Reboot"
             },

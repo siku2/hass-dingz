@@ -743,9 +743,6 @@ class Client:
     async def reset_pir_time(self, index: int) -> None:
         await self._post(f"pir/{index}/reset_time", {})
 
-    async def save_default_config(self) -> None:
-        await self._post("save_default_config", {})
-
     async def reboot(self) -> None:
         await self._post("reboot", {})
 

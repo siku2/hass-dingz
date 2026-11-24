@@ -92,9 +92,6 @@
             }
         },
         "button": {
-            "save_default_config": {
-                "name": "Standardkonfiguration speichern"
-            },
             "reboot": {
                 "name": "Neustart"
             },

@@ -10,6 +10,7 @@ from .const import CONF_BASE_URL, DOMAIN
 from .shared import DingzConfigEntry, Shared
 
 _MQTT_CONFIG_UNIQUE_ID_SUFFIXES = ("-mqtt-enable", "-mqtt-uri", "-mqtt-server.crt")
+_SAVE_DEFAULT_CONFIG_UNIQUE_ID_SUFFIX = "-save_default_config"
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
@@ -68,7 +69,8 @@ async def async_migrate_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> b
         hass.config_entries.async_update_entry(entry, minor_version=2)
 
     if entry.minor_version < 3:
-        if _remove_mqtt_config_entities(hass, entry):
+        _remove_entities(hass, entry, _SAVE_DEFAULT_CONFIG_UNIQUE_ID_SUFFIX)
+        if _remove_entities(hass, entry, *_MQTT_CONFIG_UNIQUE_ID_SUFFIXES):
             async_create_issue(
                 hass,
                 DOMAIN,
@@ -84,11 +86,13 @@ async def async_migrate_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> b
     return True
 
 
-def _remove_mqtt_config_entities(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:
+def _remove_entities(
+    hass: HomeAssistant, entry: DingzConfigEntry, *unique_id_suffixes: str
+) -> bool:
     ent_reg = er.async_get(hass)
     removed = False
     for entity in er.async_entries_for_config_entry(ent_reg, entry.entry_id):
-        if entity.unique_id.endswith(_MQTT_CONFIG_UNIQUE_ID_SUFFIXES):
+        if entity.unique_id.endswith(unique_id_suffixes):
             ent_reg.async_remove(entity.entity_id)
             removed = True
     return removed
