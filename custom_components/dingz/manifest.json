@@ -2,7 +2,8 @@
   "domain": "dingz",
   "name": "Dingz",
   "after_dependencies": [
-    "mqtt"
+    "mqtt",
+    "network"
   ],
   "codeowners": [
     "@siku2"

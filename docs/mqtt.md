@@ -25,7 +25,6 @@ As explained above, the Mosquitto broker is set up to only allow Home Assistant 
 1. Go to your Home Assistant's "Users" configuration page: [![Open your Home Assistant instance and show your users.](https://my.home-assistant.io/badges/users.svg)](https://my.home-assistant.io/redirect/users/)
 2. Create a new user.
    - I would recommend the username "dingz", but you're free to choose whatever. The display name isn't relevant, but my recommendation is to use a descriptive display name like "Dingz MQTT Connection" so you know why it's there.
-   - Use a password WITHOUT special characters. The reason is simply because special characters need to be URL-escaped later on. If you know what you're doing, feel free to ignore this :P
    - Activate "Can only log in from the local network" switch.
 
 > [!NOTE]
@@ -33,24 +32,21 @@ As explained above, the Mosquitto broker is set up to only allow Home Assistant 
 
 ### Set up your dingz devices to connect to the broker
 
-We're almost there, the only thing left is to actually configure the dingz device(s) to connect to the broker.
+We're almost there. The only thing left is to configure the dingz device(s) to connect to the broker.
 
-1. Open the "Device Info" page of your dingz device: [![Open your Home Assistant instance and show the dingz integration.](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=dingz)
-2. Scroll down to the "Configuration" section where you should see a switch "MQTT Enable" and a text box "MQTT URI".
-3. Start by filling the MQTT URI with `mqtt://username:password@homeassistant.local` and replace 'username' and 'password' with the credentials of the user we created previously (**Don't remove the ':' in-between**).
-
-   (If you didn't listen to my advice and your password contains special characters you need to use a tool like [this](https://www.utilities-online.info/urlencode) to escape them.)
-4. Enable the "MQTT Enable" switch.
-5. If you scroll down to the "Diagnostic" section you should see a binary sensor called "MQTT". If everything is working, it will show "Connected". If it's still showing as "Disconnected" double check the URI and that the enable switch is turned on. If that doesn't help, try the steps outlined in [Debugging](#debugging).
-6. Press the "Save Default Config" button to ensure these settings are preserved when the dingz restarts.
-7. Go back to the integration overview page and reload the integration entry (alternatively you can also restart the Home Assistant). The integration will now provide more entities.
+1. Open the dingz integration: [![Open your Home Assistant instance and show the dingz integration.](https://my.home-assistant.io/badges/integration.svg)](https://my.home-assistant.io/redirect/integration/?domain=dingz)
+2. Select the dingz entry and choose "Configure", then "MQTT connection".
+3. Check the broker host and port. The form suggests the broker that Home Assistant uses.
+4. Enter the username and password of the user we created previously.
+5. Submit the form. The integration saves the settings on the dingz and reloads itself. It will now provide more entities.
+6. In the "Diagnostic" section of the dingz device you should see a binary sensor called "MQTT". If everything works, it shows "Connected". If it still shows "Disconnected", check the settings in step 3 and 4. If that doesn't help, try the steps in [Debugging](#debugging).
 
 > [!IMPORTANT]
-> I don't actually know whether dingz devices are able to resolve mDNS names (like `homeassistant.local`).
-> If your device doesn't connect to the Home Assistant, try replacing `homeassistant.local` with the actual IP address of your Home Assistant instance.
+> I don't know whether dingz devices can resolve mDNS names (like `homeassistant.local`).
+> If your device doesn't connect to Home Assistant, use the IP address of your Home Assistant instance as the broker host.
 >
-> I also haven't tried to set up a TLS connection using the "Server Certificate" text box. I don't even know what format it expects (hopefully PEM, but maybe it uses raw DER which wouldn't work).
-> If you're playing around with this, please open a new discussion.
+> I also haven't tried to set up a TLS connection with the "Server certificate" field. I don't know what format the dingz expects (hopefully PEM).
+> If you try this, please open a new discussion.
 
 ## Debugging
 

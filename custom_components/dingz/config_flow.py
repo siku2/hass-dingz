@@ -4,7 +4,7 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.mqtt import MqttServiceInfo
@@ -13,6 +13,7 @@ from yarl import URL
 
 from . import api
 from .const import CONF_BASE_URL, DOMAIN
+from .options_flow import DingzOptionsFlow
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,12 +58,19 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
 
     def __init__(self) -> None:
         super().__init__()
 
         self._info: dict[str, Any] | None = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> DingzOptionsFlow:
+        return DingzOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

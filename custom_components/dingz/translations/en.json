@@ -21,6 +21,41 @@
             }
         }
     },
+    "options": {
+        "abort": {
+            "not_loaded": "Load the integration before you configure the dingz."
+        },
+        "error": {
+            "cannot_connect": "Failed to update the dingz",
+            "credentials_incomplete": "Enter both a username and a password, or neither.",
+            "invalid_host": "Enter a host name or IP address without a scheme or port."
+        },
+        "step": {
+            "init": {
+                "menu_options": {
+                    "mqtt": "MQTT connection"
+                }
+            },
+            "mqtt": {
+                "title": "MQTT connection",
+                "description": "The dingz connects to this MQTT broker and pushes its state to Home Assistant. When you submit, the settings are saved on the dingz and the integration reloads.",
+                "data": {
+                    "enable": "Enable MQTT",
+                    "host": "Broker host",
+                    "port": "Port",
+                    "ssl": "Use TLS",
+                    "username": "Username",
+                    "password": "Password",
+                    "certificate": "Server certificate"
+                },
+                "data_description": {
+                    "host": "Use an IP address if the dingz can't resolve the host name.",
+                    "username": "Use a dedicated Home Assistant user for your dingz devices.",
+                    "certificate": "PEM certificate of the broker, if the dingz needs it to verify a TLS connection."
+                }
+            }
+        }
+    },
     "device": {
         "output": {
             "name": "Output {position}"
@@ -161,25 +196,16 @@
             "diag_largest_free_block": {
                 "name": "Largest Free Block"
             }
-        },
-        "switch": {
-            "mqtt_enable": {
-                "name": "MQTT Enable"
-            }
-        },
-        "text": {
-            "mqtt_uri": {
-                "name": "MQTT URI"
-            },
-            "mqtt_server_crt": {
-                "name": "MQTT Server Certificate"
-            }
         }
     },
     "issues": {
         "output_energy_dropped": {
             "title": "Energy sensors no longer provided",
             "description": "The dingz energy sensors were never actually provided by the dingz device itself. Rather, the integration automatically set up an integration sensor for the power sensor. Recent changes in Home Assistant broke this somewhat hacky approach. Please manually re-create the integration sensor if you're using it."
+        },
+        "mqtt_config_moved": {
+            "title": "MQTT settings moved",
+            "description": "The MQTT switch and text entities of {title} were removed. To change the MQTT connection, open the dingz integration, select the entry and choose \"Configure\"."
         }
     }
 }
