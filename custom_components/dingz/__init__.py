@@ -27,6 +27,7 @@ PLATFORMS: list[Platform] = [
 
 async def async_setup_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:
     shared = Shared(hass, entry, URL(entry.data[CONF_BASE_URL]))
+    entry.async_on_unload(shared.async_unload)
     await shared.async_config_entry_first_refresh()
 
     entry.runtime_data = shared
@@ -50,10 +51,7 @@ async def async_remove_config_entry_device(
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        await entry.runtime_data.unload()
-
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: DingzConfigEntry) -> bool:

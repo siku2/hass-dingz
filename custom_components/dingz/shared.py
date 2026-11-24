@@ -134,7 +134,8 @@ class Shared:
             )
             await async_subscribe_topics(self.hass, self._sub_state)
 
-    async def unload(self) -> None:
+    @callback
+    def async_unload(self) -> None:
         self._sub_state = async_unsubscribe_topics(self.hass, self._sub_state)
 
     def add_listener(self, listener: _NotificationCallbackT) -> Callable[[], None]:
