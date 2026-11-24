@@ -20,7 +20,9 @@ Make sure you have [HACS](https://hacs.xyz) installed.
 
 ## Supported Features
 
-When you make changes to the dingz configuration (for instance when setting up the MQTT connection, or changing the output configuration), reload the integration (or restart Home Assistant) to update the entities.
+Each output, blind and DDI channel shows up as its own device below the dingz.
+
+When you change the dingz configuration outside of Home Assistant (for instance the output configuration), reload the integration (or restart Home Assistant) to update the entities.
 
 The following features are fully supported and, since I'm actively using them, should always work:
 
@@ -28,7 +30,7 @@ The following features are fully supported and, since I'm actively using them, s
 - Front panel LED with RGB support
 - PIR Motion detection (incl. live updates when used in combination with MQTT[^1])
 - Button press events (**only** when used in combination with MQTT[^1])
-- Power and Energy sensors for outputs
+- Power sensors for outputs
 - Various other sensors like brightness, temperature etc.
 - Physical dingz inputs (incl. live updates when used in combination with MQTT[^1])
 
